@@ -233,7 +233,7 @@ namespace LumisCalendarSync
             StringBuilder sb1 = new StringBuilder();
             sb1.AppendLine(String.Format("This will delete all synced appointments from [{0}] and will disable automatic sync to this calendar.", Properties.Settings.Default.DestinationCalendar));
             sb1.AppendLine("You can set up Automatic sync to the same calendar or another calendar afterwards. Your default calendar is not affected.");
-            var response = MessageBox.Show(sb1.ToString(), "Warning", MessageBoxButtons.OKCancel);
+            var response = MessageBox.Show(sb1.ToString(), "Lumis Calendar Sync", MessageBoxButtons.OKCancel);
             if (response == DialogResult.Cancel) return;
 
             if (timer.Enabled)
@@ -250,8 +250,8 @@ namespace LumisCalendarSync
             timer.Start();
             StringBuilder sb = new StringBuilder();
             sb.AppendLine(String.Format("{0} synced Appointments deleted from calendar [{1}].", deletedItems, targetCalendar));
-            sb.AppendLine("Automatic sync is disabled. Use Lumis Calendar Sync Settings Menu to set up sync to a new target calendar.");
-            MessageBox.Show(sb.ToString());
+            sb.AppendLine("Automatic sync is disabled. Use Lumis Calendar Sync add-in Settings Menu to set up sync to a new target calendar.");
+            MessageBox.Show(sb.ToString(), "Lumis Calendar Sync");
         }
 
         private void configButton_Click(Office.CommandBarButton ctrl, ref bool cancel)

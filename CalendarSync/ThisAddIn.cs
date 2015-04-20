@@ -64,6 +64,13 @@ namespace LumisCalendarSync
         void syncObject_SyncStart()
         {
             timer.Stop();
+            // if this happens in the time when an appointment sync was set up but not yet executed, we cancel that appointment sync by changing the timer Command to none:
+            // The use case is most probably when an automatic connector sync was done few secconds ago and now the user pressed F9.
+            // The syncObject_endSync will set up another AppointmentSync, so no problem in cancelling this one.
+            if (timerCommand == TimerCommand.AppointmentsSync)
+            {
+                timerCommand = TimerCommand.None;
+            }
         }
 
         void syncObject_OnError(int Code, string Description)
@@ -317,7 +324,7 @@ namespace LumisCalendarSync
         {
             if (LumisCalendarSync.Properties.Settings.Default.DestinationCalendar == "None" || String.IsNullOrWhiteSpace(LumisCalendarSync.Properties.Settings.Default.DestinationCalendar))
             {
-                messageLog.WriteLine("No Destination Calendar is selected, sync is diabled.");
+                messageLog.WriteLine("No Destination Calendar is selected, sync is disabled.");
                 messageLog.WriteLine();
                 return;
             }

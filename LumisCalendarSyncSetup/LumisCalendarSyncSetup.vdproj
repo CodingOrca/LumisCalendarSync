@@ -27,6 +27,12 @@
         }
         "Entry"
         {
+        "MsmKey" = "8:_32D554CC4F17FE8E8064C1BAD5D474C7"
+        "OwnerKey" = "8:_4057E74552F50ED057C7AD717A60A4D0"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_37267CE9FBC34E39935C18137B396D82"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
@@ -35,18 +41,6 @@
         {
         "MsmKey" = "8:_4057E74552F50ED057C7AD717A60A4D0"
         "OwnerKey" = "8:_138F3F5E1B49419682907AA8AEAB3743"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_64E2ED680BE917BEFC10BD35B85F4CEA"
-        "OwnerKey" = "8:_138F3F5E1B49419682907AA8AEAB3743"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_64E2ED680BE917BEFC10BD35B85F4CEA"
-        "OwnerKey" = "8:_4057E74552F50ED057C7AD717A60A4D0"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -63,26 +57,20 @@
         }
         "Entry"
         {
-        "MsmKey" = "8:_A6039CE0176F870E90BBD50A37BEDE15"
-        "OwnerKey" = "8:_64E2ED680BE917BEFC10BD35B85F4CEA"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_A6039CE0176F870E90BBD50A37BEDE15"
-        "OwnerKey" = "8:_4057E74552F50ED057C7AD717A60A4D0"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_A6039CE0176F870E90BBD50A37BEDE15"
-        "OwnerKey" = "8:_138F3F5E1B49419682907AA8AEAB3743"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
         "MsmKey" = "8:_B54259DFE01804DA5F79910BC3346A5C"
         "OwnerKey" = "8:_138F3F5E1B49419682907AA8AEAB3743"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_B8C9B1AFB16ECCCCF574AEA7982C4AAF"
+        "OwnerKey" = "8:_32D554CC4F17FE8E8064C1BAD5D474C7"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_B8C9B1AFB16ECCCCF574AEA7982C4AAF"
+        "OwnerKey" = "8:_4057E74552F50ED057C7AD717A60A4D0"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -136,19 +124,19 @@
         "Entry"
         {
         "MsmKey" = "8:_UNDEFINED"
+        "OwnerKey" = "8:_32D554CC4F17FE8E8064C1BAD5D474C7"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_UNDEFINED"
+        "OwnerKey" = "8:_B8C9B1AFB16ECCCCF574AEA7982C4AAF"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_UNDEFINED"
         "OwnerKey" = "8:_D68B0CC5F3AE64A3D3895E13234D292A"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_64E2ED680BE917BEFC10BD35B85F4CEA"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_A6039CE0176F870E90BBD50A37BEDE15"
         "MsmSig" = "8:_UNDEFINED"
         }
     }
@@ -276,6 +264,37 @@
             "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
+            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_32D554CC4F17FE8E8064C1BAD5D474C7"
+            {
+            "AssemblyRegister" = "3:1"
+            "AssemblyIsInGAC" = "11:TRUE"
+            "AssemblyAsmDisplayName" = "8:Microsoft.Office.Tools.Common, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL"
+                "ScatterAssemblies"
+                {
+                    "_32D554CC4F17FE8E8064C1BAD5D474C7"
+                    {
+                    "Name" = "8:Microsoft.Office.Tools.Common.dll"
+                    "Attributes" = "3:512"
+                    }
+                }
+            "SourcePath" = "8:Microsoft.Office.Tools.Common.dll"
+            "TargetName" = "8:"
+            "Tag" = "8:"
+            "Folder" = "8:_3570DE26FB70442CA0ECE21DC22E9CA2"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:TRUE"
+            "IsolateTo" = "8:"
+            }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_37267CE9FBC34E39935C18137B396D82"
             {
             "SourcePath" = "8:..\\CalendarSync\\bin\\Release\\LumisCalendarSync.dll.manifest"
@@ -327,37 +346,6 @@
             "IsDependency" = "11:TRUE"
             "IsolateTo" = "8:"
             }
-            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_64E2ED680BE917BEFC10BD35B85F4CEA"
-            {
-            "AssemblyRegister" = "3:1"
-            "AssemblyIsInGAC" = "11:FALSE"
-            "AssemblyAsmDisplayName" = "8:Microsoft.Office.Tools.Common, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL"
-                "ScatterAssemblies"
-                {
-                    "_64E2ED680BE917BEFC10BD35B85F4CEA"
-                    {
-                    "Name" = "8:Microsoft.Office.Tools.Common.dll"
-                    "Attributes" = "3:512"
-                    }
-                }
-            "SourcePath" = "8:Microsoft.Office.Tools.Common.dll"
-            "TargetName" = "8:"
-            "Tag" = "8:"
-            "Folder" = "8:_3570DE26FB70442CA0ECE21DC22E9CA2"
-            "Condition" = "8:"
-            "Transitive" = "11:FALSE"
-            "Vital" = "11:TRUE"
-            "ReadOnly" = "11:FALSE"
-            "Hidden" = "11:FALSE"
-            "System" = "11:FALSE"
-            "Permanent" = "11:FALSE"
-            "SharedLegacy" = "11:FALSE"
-            "PackageAs" = "3:1"
-            "Register" = "3:1"
-            "Exclude" = "11:FALSE"
-            "IsDependency" = "11:TRUE"
-            "IsolateTo" = "8:"
-            }
             "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_A467BF6AAB802C7C97587B60B91D3F34"
             {
             "AssemblyRegister" = "3:1"
@@ -389,20 +377,20 @@
             "IsDependency" = "11:TRUE"
             "IsolateTo" = "8:"
             }
-            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_A6039CE0176F870E90BBD50A37BEDE15"
+            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_B54259DFE01804DA5F79910BC3346A5C"
             {
             "AssemblyRegister" = "3:1"
             "AssemblyIsInGAC" = "11:FALSE"
-            "AssemblyAsmDisplayName" = "8:Microsoft.Office.Tools, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL"
+            "AssemblyAsmDisplayName" = "8:Microsoft.Office.Tools.Outlook.v4.0.Utilities, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL"
                 "ScatterAssemblies"
                 {
-                    "_A6039CE0176F870E90BBD50A37BEDE15"
+                    "_B54259DFE01804DA5F79910BC3346A5C"
                     {
-                    "Name" = "8:Microsoft.Office.Tools.dll"
+                    "Name" = "8:Microsoft.Office.Tools.Outlook.v4.0.Utilities.dll"
                     "Attributes" = "3:512"
                     }
                 }
-            "SourcePath" = "8:Microsoft.Office.Tools.dll"
+            "SourcePath" = "8:Microsoft.Office.Tools.Outlook.v4.0.Utilities.dll"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_3570DE26FB70442CA0ECE21DC22E9CA2"
@@ -420,20 +408,20 @@
             "IsDependency" = "11:TRUE"
             "IsolateTo" = "8:"
             }
-            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_B54259DFE01804DA5F79910BC3346A5C"
+            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_B8C9B1AFB16ECCCCF574AEA7982C4AAF"
             {
             "AssemblyRegister" = "3:1"
-            "AssemblyIsInGAC" = "11:FALSE"
-            "AssemblyAsmDisplayName" = "8:Microsoft.Office.Tools.Outlook.v4.0.Utilities, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL"
+            "AssemblyIsInGAC" = "11:TRUE"
+            "AssemblyAsmDisplayName" = "8:Microsoft.Office.Tools, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL"
                 "ScatterAssemblies"
                 {
-                    "_B54259DFE01804DA5F79910BC3346A5C"
+                    "_B8C9B1AFB16ECCCCF574AEA7982C4AAF"
                     {
-                    "Name" = "8:Microsoft.Office.Tools.Outlook.v4.0.Utilities.dll"
+                    "Name" = "8:Microsoft.Office.Tools.dll"
                     "Attributes" = "3:512"
                     }
                 }
-            "SourcePath" = "8:Microsoft.Office.Tools.Outlook.v4.0.Utilities.dll"
+            "SourcePath" = "8:Microsoft.Office.Tools.dll"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_3570DE26FB70442CA0ECE21DC22E9CA2"
@@ -569,15 +557,15 @@
         {
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:Lumis Calendar Sync"
-        "ProductCode" = "8:{8C65D477-BD35-4162-B347-900E7B52E0E2}"
-        "PackageCode" = "8:{D59626B0-0670-4C70-AF1F-BA783318F795}"
+        "ProductCode" = "8:{F57DE2C4-AE0E-422F-8E4A-BBB683110B8A}"
+        "PackageCode" = "8:{FEAC1ACD-33B6-4AA1-B999-5BB2C1B9FF79}"
         "UpgradeCode" = "8:{26D669D8-BB9B-4FC3-9BA8-9EA8A50A1EE2}"
         "AspNetVersion" = "8:4.0.30319.0"
         "RestartWWWService" = "11:FALSE"
         "RemovePreviousVersions" = "11:TRUE"
         "DetectNewerInstalledVersion" = "11:TRUE"
         "InstallAllUsers" = "11:FALSE"
-        "ProductVersion" = "8:1.0.0"
+        "ProductVersion" = "8:1.1.0"
         "Manufacturer" = "8:Artur Pusztai"
         "ARPHELPTELEPHONE" = "8:"
         "ARPHELPLINK" = "8:"

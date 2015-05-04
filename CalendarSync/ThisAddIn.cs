@@ -364,8 +364,18 @@ namespace LumisCalendarSync
 
                 dstAppointmentReferences += targetItems.Count;
 
-                foreach (Outlook.AppointmentItem srcAppointment in srcAppointmentItems)
+                foreach (var item in srcAppointmentItems)
                 {
+                    Outlook.AppointmentItem srcAppointment = null;
+                    try
+                    {
+                        srcAppointment = item as Outlook.AppointmentItem;
+                    }
+                    catch
+                    {
+                        srcAppointment = null;
+                    }
+
                     if (srcAppointment == null) continue;
 
                     srcAppointmentReferences++;

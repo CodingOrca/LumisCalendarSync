@@ -558,7 +558,7 @@
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:Lumis Calendar Sync"
         "ProductCode" = "8:{BFF5E430-AC7E-486D-8D64-C7C55C883BEC}"
-        "PackageCode" = "8:{9A90AD18-9B9A-4ABD-8A2E-46B4503195D6}"
+        "PackageCode" = "8:{C1462378-6E79-4FAF-AFE9-F072C9A7FE13}"
         "UpgradeCode" = "8:{26D669D8-BB9B-4FC3-9BA8-9EA8A50A1EE2}"
         "AspNetVersion" = "8:4.0.30319.0"
         "RestartWWWService" = "11:FALSE"

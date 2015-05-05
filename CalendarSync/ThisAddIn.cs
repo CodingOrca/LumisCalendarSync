@@ -463,6 +463,8 @@ namespace LumisCalendarSync
                                 dstAppointment.Subject = srcAppointment.Subject;
                                 operationChain += "Updating Location; ";
                                 dstAppointment.Location = srcAppointment.Location;
+                                operationChain += "Updating BusyStatus; ";
+                                dstAppointment.BusyStatus = srcAppointment.BusyStatus;
 
                                 if (!srcAppointment.IsRecurring)
                                 {

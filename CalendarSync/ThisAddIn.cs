@@ -533,7 +533,10 @@ namespace LumisCalendarSync
                                     }
 
                                     dstPattern.PatternStartDate = srcPattern.PatternStartDate;
-                                    dstPattern.Interval = srcPattern.Interval;
+                                    if (srcPattern.Interval > 0)
+                                    {
+                                        dstPattern.Interval = srcPattern.Interval;
+                                    }
                                     dstPattern.NoEndDate = srcPattern.NoEndDate;
                                     if (!srcPattern.NoEndDate)
                                     {

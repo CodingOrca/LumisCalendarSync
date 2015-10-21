@@ -304,7 +304,7 @@ namespace LumisCalendarSync
             Outlook.Items dstAppointmentItems = GetAllTargetAppointments();
 
             // get all appointments in the dstAppointmentItems which where synced before:
-            Dictionary<string, Outlook.AppointmentItem> targetItems = GetAllSyncedAppointments(dstAppointmentItems);
+            Dictionary<string, Outlook.AppointmentItem> targetItems = GetAllSyncedAppointments(dstAppointmentItems, null);
 
             messageLog.WriteLine("Deleting all synced appointments in the target calendar to enforce a sync.");
             int deletedItems = DeleteAppointments(targetItems);
@@ -360,7 +360,7 @@ namespace LumisCalendarSync
                 operationChain = "listing all appointments in target calendar";
 
                 // get all appointments in the dstAppointmentItems which where synced before:
-                Dictionary<string, Outlook.AppointmentItem> targetItems = GetAllSyncedAppointments(dstAppointmentItems);
+                Dictionary<string, Outlook.AppointmentItem> targetItems = GetAllSyncedAppointments(dstAppointmentItems, srcAppointmentItems);
 
                 dstAppointmentReferences += targetItems.Count;
 
@@ -372,10 +372,9 @@ namespace LumisCalendarSync
                         srcAppointment = item as Outlook.AppointmentItem;
                     }
                     catch
-                    {
+                {
                         srcAppointment = null;
                     }
-
                     if (srcAppointment == null) continue;
 
                     srcAppointmentReferences++;
@@ -535,7 +534,7 @@ namespace LumisCalendarSync
                                     dstPattern.PatternStartDate = srcPattern.PatternStartDate;
                                     if (srcPattern.Interval > 0)
                                     {
-                                        dstPattern.Interval = srcPattern.Interval;
+                                    dstPattern.Interval = srcPattern.Interval;
                                     }
                                     dstPattern.NoEndDate = srcPattern.NoEndDate;
                                     if (!srcPattern.NoEndDate)
@@ -768,7 +767,7 @@ namespace LumisCalendarSync
         /// </summary>
         /// <param name="dstAppointmentItems">The list of target appointments to be scanned</param>
         /// <returns></returns>
-        private static Dictionary<string, Outlook.AppointmentItem> GetAllSyncedAppointments(Outlook.Items dstAppointmentItems)
+        private static Dictionary<string, Outlook.AppointmentItem> GetAllSyncedAppointments(Outlook.Items dstAppointmentItems, Outlook.Items srcAppointmentItems)
         {
             Dictionary<string, Outlook.AppointmentItem> targetItems = new Dictionary<string, Outlook.AppointmentItem>();
 
@@ -789,11 +788,41 @@ namespace LumisCalendarSync
                 }
                 else
                 {
-                    Marshal.ReleaseComObject(appointment);
+                    Outlook.AppointmentItem originalItem = FindOriginalMatchingItem(appointment, srcAppointmentItems);
+                    if (originalItem == null)
+                    {
+                        Marshal.ReleaseComObject(appointment);
+                    }
+                    else
+                    {
+                        appointment.UserProperties.Add("originalId", Outlook.OlUserPropertyType.olText, false);
+                        appointment.UserProperties["originalId"].Value = originalItem.GlobalAppointmentID;
+                        appointment.Save();
+                    }
                 }
 
             }
             return targetItems;
+        }
+
+        // heuristic to find an appointment in the source calendar matching to an existing appointment in the destination calender.
+        // this will be called when syncing the default calendar with a destination calender for the first time
+        private static Outlook.AppointmentItem FindOriginalMatchingItem(Outlook.AppointmentItem appointment, Outlook.Items srcAppointmentItems)
+        {
+            if (srcAppointmentItems == null)
+            {
+                return null;
+            }
+
+            foreach (Outlook.AppointmentItem srcAppointment in srcAppointmentItems)
+            {
+                if (srcAppointment == null) continue;
+                if (srcAppointment.Subject != appointment.Subject) continue;
+                if (srcAppointment.IsRecurring != appointment.IsRecurring) continue;
+                return srcAppointment;
+            }
+
+            return null;
         }
 
         #region VSTO generated code

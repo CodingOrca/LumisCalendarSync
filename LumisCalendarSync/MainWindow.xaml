@@ -1,0 +1,158 @@
+﻿<Window 
+    x:Class="LumisCalendarSync.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:viewModels="clr-namespace:LumisCalendarSync.ViewModels"
+    Loaded="MainWindow_OnLoaded"
+    >
+    <Window.DataContext>
+        <viewModels:MainViewModel x:Name="MainViewModel"/>
+    </Window.DataContext>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <StackPanel
+            Grid.Row="0"
+            Margin="12,12,12,12"
+            Orientation="Vertical"
+            VerticalAlignment="Bottom"
+            HorizontalAlignment="Right"
+            >
+            <TextBlock
+                HorizontalAlignment="Right"
+                Visibility="{Binding IsLoggedOut, Converter={StaticResource BoolToVisibilityConverter}}"
+                >
+                <Hyperlink Click="BtnSignIn_Click" IsEnabled="{Binding IsIdle}"> Log in </Hyperlink>
+            </TextBlock>
+            <TextBlock
+                HorizontalAlignment="Right"
+                Visibility="{Binding IsLoggedIn, Converter={StaticResource BoolToVisibilityConverter}}"
+                >
+                <Hyperlink Click="BtnSignOut_Click" IsEnabled="{Binding IsIdle}"> Log out </Hyperlink>
+            </TextBlock>
+            <TextBlock Text="{Binding User.EmailAddress}"/>
+        </StackPanel>
+        <StackPanel
+            Grid.Row="0" 
+            Orientation="Horizontal"
+            HorizontalAlignment="Left" 
+            VerticalAlignment="Bottom"
+            Margin="12,12,12,12" 
+            >
+            <ComboBox
+                MinWidth="250" 
+                ItemsSource="{Binding Calendars}" 
+                SelectedValue="{Binding SelectedCalendar, Mode=TwoWay}"
+                DisplayMemberPath="Name"
+                IsEnabled="{Binding CanChangeCalendar}" 
+                />
+            <Button
+                Margin="12,0"
+                Width="100"
+                Content="Sync"
+                Command="{Binding SynchronizeCommand}"
+                />
+            <CheckBox
+                VerticalAlignment="Center"
+                Margin="12,0"
+                Content="Autosync every"
+                IsChecked="{Binding IsAutoSyncEnabled, Mode=TwoWay}"
+                IsEnabled="{Binding CanAutosync}"
+                ToolTip="When autosync is activated, the close button will minimize to system tray. Use the Tray icon to exit the app."
+                />
+            <TextBox 
+                VerticalAlignment="Center"
+                MinWidth="30"
+                Text="{Binding AutoSyncInterval, Mode=TwoWay, ValidatesOnExceptions=True}"/>
+            <TextBlock 
+                VerticalAlignment="Center"
+                Text=" minutes"/>
+            <CheckBox 
+                Margin="24,0,0,0"
+                VerticalAlignment="Center"
+                IsChecked ="{Binding RunAtStartup, Mode=TwoWay}" 
+                Content="Start when I log in"/>
+
+        </StackPanel>
+        <DataGrid
+            Grid.Row="1"
+            Margin="12"
+            AutoGenerateColumns="False"
+            RowHeaderWidth="0"
+            IsReadOnly="True"
+            ItemsSource="{Binding Events}"
+            SelectedValue="{Binding SelectedEvent, Mode=TwoWay}"
+            >
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Synced?" Binding="{Binding IsSynchronized}"/>
+                <DataGridTextColumn Header="Subject" Width="300" Binding="{Binding Subject}"/>
+                <DataGridTextColumn Header="Location" Binding="{Binding Location}"/>
+                <DataGridTextColumn Header="Start" Binding="{Binding Start}"/>
+                <DataGridTextColumn Header="End" Binding="{Binding End}"/>
+                <DataGridTextColumn Header="Recurring?" Binding="{Binding IsRecurring}"/>
+                <DataGridTextColumn Header="Recurrence" Binding="{Binding Recurrence}"/>
+                <DataGridTextColumn Header="Reminder [min]" Binding="{Binding Reminder}"/>
+            </DataGrid.Columns>           
+        </DataGrid>
+        <TextBlock
+            Grid.Row="2"
+            Margin="12"
+            TextWrapping="Wrap"
+            Text="If you see duplicates, delete the ones which are not synced."
+            />
+        <StackPanel
+            Grid.Row="2"
+            Margin="12"
+            HorizontalAlignment="Right"
+            Orientation="Horizontal"
+            >
+            <Button
+                Width="120"
+                VerticalAlignment="Center"
+                Command="{Binding DeleteEventCommand}"
+                Content="Delete Event"
+                />
+            <Button
+                Width="120"
+                Content="Delete All Events"
+                Margin="12,0,0,0"
+                Command="{Binding DeleteAllCommand}"
+                />
+        </StackPanel>
+        <Expander
+            Grid.Row="3"
+            ExpandDirection="Up"
+            >
+            <Expander.Header>
+                <StackPanel
+                    Orientation="Horizontal">
+                    <TextBlock Text="Log file: "/>
+                    <TextBlock>
+                        <Hyperlink 
+                            NavigateUri="{Binding LogFileName}" 
+                            RequestNavigate="Hyperlink_RequestNavigate"
+                            >
+                            <TextBlock Text="{Binding LogFileName}"/>
+                        </Hyperlink>
+                    </TextBlock>
+                </StackPanel>
+            </Expander.Header>
+            <ListBox
+                x:Name="LogListBox"
+                Height="100"
+                ItemsSource="{Binding LogEntries}"
+                />
+        </Expander>
+        <StatusBar
+            Grid.Row="4">
+            <StatusBarItem>
+                <TextBlock Text="{Binding Error}" Foreground="Red"/>
+            </StatusBarItem>
+        </StatusBar>
+    </Grid>
+</Window>

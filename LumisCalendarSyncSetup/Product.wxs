@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Product Id="*" Name="Lumis Calendar Sync" Language="1033" Version="2.0.4.0" Manufacturer="Artur Pusztai" UpgradeCode="550dbe12-c618-4d8d-81ff-8343758c6879">
+    <Package InstallerVersion="300" Compressed="yes" InstallScope="perUser"/>
+
+    <MajorUpgrade
+      Schedule="afterInstallInitialize"
+      DowngradeErrorMessage="A newer version of [ProductName] is already installed. Setup will now exit." />
+    <Media Id="1" Cabinet="LumisCalendarSync.cab" EmbedCab="yes" />
+
+    <!-- Step 1: Define the directory structure -->
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="LocalAppDataFolder">
+        <Directory Id="APPLICATIONROOTDIRECTORY" Name="LumisCalendarSync"/>
+      </Directory>
+      <Directory Id="ProgramMenuFolder">
+          <Directory Id="ApplicationProgramsFolder" Name="Lumis Calendar Sync"/>
+      </Directory>
+    </Directory>
+
+    <!-- Step 2: Add files to your installer package -->
+    <DirectoryRef Id="APPLICATIONROOTDIRECTORY">
+      <Component Id="LumisCalendarSync.exe" Guid="61394954-E372-4B87-9925-D6461EFDED35">
+        <RemoveFolder Id="APPLICATIONROOTDIRECTORY" On="uninstall"/>
+        <RegistryValue Root="HKCU" Key="Software\Microsoft\LumisCalendarSync" Name="installed" Type="integer" Value="1" KeyPath="yes"/>
+        <File Id="LumisCalendarSync.exe" Source="$(var.LumisCalendarSync.TargetDir)" Checksum="yes"/>
+        <File Id="LumisCalendarSync.exe.config" Source="$(var.LumisCalendarSync.TargetDir)" Checksum="yes"/>
+        <File Id="Microsoft.OData.Client.dll" Source="$(var.LumisCalendarSync.TargetDir)" Checksum="yes"/>
+        <File Id="Microsoft.OData.Client.xml" Source="$(var.LumisCalendarSync.TargetDir)" Checksum="yes"/>
+        <File Id="Microsoft.OData.Core.dll" Source="$(var.LumisCalendarSync.TargetDir)" Checksum="yes"/>
+        <File Id="Microsoft.OData.Core.xml" Source="$(var.LumisCalendarSync.TargetDir)" Checksum="yes"/>
+        <File Id="Microsoft.OData.Edm.dll" Source="$(var.LumisCalendarSync.TargetDir)" Checksum="yes"/>
+        <File Id="Microsoft.OData.Edm.xml" Source="$(var.LumisCalendarSync.TargetDir)" Checksum="yes"/>
+        <File Id="Microsoft.OData.ProxyExtensions.dll" Source="$(var.LumisCalendarSync.TargetDir)" Checksum="yes"/>
+        <File Id="Microsoft.Office365.OutlookServices.Portable.dll" Source="$(var.LumisCalendarSync.TargetDir)" Checksum="yes"/>
+        <File Id="Microsoft.Spatial.dll" Source="$(var.LumisCalendarSync.TargetDir)" Checksum="yes"/>
+        <File Id="Microsoft.Spatial.xml" Source="$(var.LumisCalendarSync.TargetDir)" Checksum="yes"/>
+        <File Id="Interop.IWshRuntimeLibrary.dll" Source="$(var.LumisCalendarSync.TargetDir)" Checksum="yes"/>
+        <File Id="Interop.Shell32.dll" Source="$(var.LumisCalendarSync.TargetDir)" Checksum="yes"/>
+      </Component>
+    </DirectoryRef>
+
+    <!-- Step 2: Add the shortcut to your installer package -->
+    <DirectoryRef Id="ApplicationProgramsFolder">
+        <Component Id="ApplicationShortcut" Guid="B9D846A6-2C22-40A0-A3C3-6EED8FE11B0A">
+            <Shortcut Id="ApplicationStartMenuShortcut" 
+                Name="Lumis Calendar Sync" 
+                Description="My Application Description"
+                Target="[#LumisCalendarSync.exe]"
+                WorkingDirectory="APPLICATIONROOTDIRECTORY"/>
+            <RemoveFolder Id="ApplicationProgramsFolder" On="uninstall"/>
+            <RegistryValue Root="HKCU" Key="Software\Microsoft\LumisCalendarSync" Name="installed" Type="integer" Value="1" KeyPath="yes"/>
+        </Component>
+    </DirectoryRef>
+
+    <!-- Step 3: Tell WiX to install the files -->
+    <Feature Id="LumisCalendarSync" Title="Lumis Calendar Sync" Level="1">
+      <ComponentRef Id="LumisCalendarSync.exe" />
+      <ComponentRef Id="ApplicationShortcut" />   
+    </Feature>
+
+
+    <UI>
+        <UIRef Id="WixUI_Minimal" />
+        <Publish Dialog="ExitDialog" 
+            Control="Finish" 
+            Event="DoAction" 
+            Value="LaunchApplication">WIXUI_EXITDIALOGOPTIONALCHECKBOX = 1 and NOT Installed</Publish>
+    </UI>
+    
+    <Property Id="WIXUI_EXITDIALOGOPTIONALCHECKBOXTEXT" Value="Launch Lumis Calendar Sync" />
+
+    <Property Id="WixShellExecTarget" Value="[#LumisCalendarSync.exe]" />
+    <CustomAction Id="LaunchApplication" 
+        BinaryKey="WixCA" 
+        DllEntry="WixShellExec"/>
+
+    <Icon Id="LumisCalendarSyncIcon.ico" SourceFile="$(var.LumisCalendarSync.ProjectDir)\Resources\LumisCalendarSyncIcon.ico"/>
+    <Property Id="ARPPRODUCTICON" Value="LumisCalendarSyncIcon.ico" />
+    <WixVariable Id="WixUILicenseRtf" Value="License.rtf" />
+  </Product>
+</Wix>

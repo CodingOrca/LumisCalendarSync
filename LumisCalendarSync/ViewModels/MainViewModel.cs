@@ -1133,14 +1133,20 @@ namespace LumisCalendarSync.ViewModels
         {
             RunningAsyncOperations++;
             var result = new List<IEvent>();
-
-            var evts = await myOutlookServicesClient.Me.Calendars[calendarid].Events.ExecuteAsync();
-            while(evts != null)
+            try
             {
-                result.AddRange(evts.CurrentPage);
-                evts = evts.MorePagesAvailable ? await evts.GetNextPageAsync() : null;
+
+                var evts = await myOutlookServicesClient.Me.Calendars[calendarid].Events.ExecuteAsync();
+                while (evts != null)
+                {
+                    result.AddRange(evts.CurrentPage);
+                    evts = evts.MorePagesAvailable ? await evts.GetNextPageAsync() : null;
+                }
             }
-            RunningAsyncOperations--;
+            finally
+            {
+                RunningAsyncOperations--;
+            }
 
             return result;
         }

@@ -1,4 +1,5 @@
-﻿using Microsoft.Office365.OutlookServices;
+﻿using System;
+using Microsoft.Office365.OutlookServices;
 
 
 namespace LumisCalendarSync.ViewModels
@@ -41,7 +42,14 @@ namespace LumisCalendarSync.ViewModels
         {
             get
             {
-                return myEvent.Start.DateTime.Substring(0, 16) + " UTC";
+                var dt = DateTime.Parse(myEvent.Start.DateTime);
+                var timeZoneInfo = TimeZoneInfo.Utc;
+                if (!string.IsNullOrWhiteSpace(Event.Start.TimeZone))
+                {
+                    timeZoneInfo = TimeZoneInfo.FindSystemTimeZoneById(Event.Start.TimeZone);
+                }
+                dt = TimeZoneInfo.ConvertTime(dt, timeZoneInfo, TimeZoneInfo.Local);
+                return dt.ToString("g");
             }
         }
 
@@ -49,7 +57,14 @@ namespace LumisCalendarSync.ViewModels
         {
             get
             {
-                return myEvent.End.DateTime.Substring(0, 16) + " UTC";
+                var dt = DateTime.Parse(myEvent.End.DateTime);
+                var timeZoneInfo = TimeZoneInfo.Utc;
+                if (!string.IsNullOrWhiteSpace(Event.End.TimeZone))
+                {
+                    timeZoneInfo = TimeZoneInfo.FindSystemTimeZoneById(Event.End.TimeZone);
+                }
+                dt = TimeZoneInfo.ConvertTime(dt, timeZoneInfo, TimeZoneInfo.Local);
+                return dt.ToString("g");
             }
         }
 

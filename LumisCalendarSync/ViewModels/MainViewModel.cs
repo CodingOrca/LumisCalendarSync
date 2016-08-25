@@ -3,12 +3,15 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Web.Script.Serialization;
 using System.Windows.Threading;
 using IWshRuntimeLibrary;
 using LumisCalendarSync.Model;
+using LumisCalendarSync.Properties;
+
 using Microsoft.OData.ProxyExtensions;
 using Microsoft.Office.Interop.Outlook;
 using Microsoft.Office365.OutlookServices;
@@ -23,12 +26,25 @@ namespace LumisCalendarSync.ViewModels
 {
     public class MainViewModel: BindableBase
     {
+        // When we change the list synced attributes, we change this CurrentAppVersion to force a sync of all appointments 
+        // at the first sync with the new app version. 
+        // Best Practice: if we change some code (fix or new feature) which needs a full sync, set this to the same value as in the MSI.
+        // But not needing to set it vor every new MSI version: if no sync must be forced, don't set it.
+        private const string CurrentAppVersion = "2.0.8.0";
+
         public MainViewModel()
         {
             OAuthHelper = new OAuthHelper();
             Calendars = new ObservableCollection<ICalendar>();
             Events = new ObservableCollection<EventModel>();
             LogEntries = new ObservableCollection<string>();
+
+            if (CurrentAppVersion != Settings.Default.AppVersion)
+            {
+                Settings.Default.AppVersion = CurrentAppVersion;
+                Settings.Default.ForceNextSync = true;
+                Settings.Default.Save();
+            }
             
             myTimer = new DispatcherTimer();
             myTimer.Tick += Timer_Tick;
@@ -435,18 +451,15 @@ namespace LumisCalendarSync.ViewModels
                                 dstAppointment = targetItems[srcAppointment.GlobalAppointmentID];
                                 targetItems.Remove(srcAppointment.GlobalAppointmentID);
                                 string lastSyncTime = GetLastSyncTimeStamp(srcAppointment);
-                                if (lastSyncTime != null)
+                                // skip appointments which did not changed since last sync
+                                if (lastSyncTime == srcAppointment.LastModificationTime.ToString("O") && !Settings.Default.ForceNextSync)
                                 {
-                                    // skip appointments which did not changed since last sync
-                                    if (lastSyncTime == srcAppointment.LastModificationTime.ToString("O"))
-                                    {
-                                        unchangedAppointments++;
-                                        Events.Add(new EventModel(dstAppointment){IsSynchronized = true});
-                                        continue;
-                                    }
+                                    unchangedAppointments++;
+                                    Events.Add(new EventModel(dstAppointment){IsSynchronized = true});
+                                    continue;
                                 }
-                                // target appointments for which IsRecurring IsAllDay changed are deleted
-                                // and we create a fresh one.
+                                // target appointments for which IsRecurring or IsAllDay changed are deleted
+                                // (we create a fresh one later on)
                                 if (IsRecurring(dstAppointment) || srcAppointment.IsRecurring || srcAppointment.AllDayEvent != dstAppointment.IsAllDay)
                                 {
                                     await dstAppointment.DeleteAsync();
@@ -479,6 +492,11 @@ namespace LumisCalendarSync.ViewModels
                                 dstAppointment.Location = new Location {DisplayName = srcAppointment.Location};
                                 operationChain += "Updating BusyStatus; ";
                                 dstAppointment.ShowAs = GetFreeBusyStatus(srcAppointment.BusyStatus);
+                                dstAppointment.IsReminderOn = srcAppointment.ReminderSet;
+                                if (srcAppointment.ReminderSet)
+                                {
+                                    dstAppointment.ReminderMinutesBeforeStart = srcAppointment.ReminderMinutesBeforeStart;
+                                }
 
                                 if (!srcAppointment.IsRecurring)
                                 {
@@ -589,8 +607,9 @@ namespace LumisCalendarSync.ViewModels
                                         await dstAppointment.UpdateAsync();
                                     }
                                     Events.Add(new EventModel(dstAppointment) { IsSynchronized = true });
-                                    var srcExceptions = srcPattern.Exceptions;
 
+                                    // Handling exceptions for the recurring appointment:
+                                    var srcExceptions = srcPattern.Exceptions;
                                     try
                                     {
                                         if (srcExceptions == null || srcExceptions.Count <= 0)
@@ -643,6 +662,11 @@ namespace LumisCalendarSync.ViewModels
                                                         dstExceptionItem.Location = new Location {DisplayName = srcExceptionItem.Location};
                                                         dstExceptionItem.Start = CreateDateTimeTimeZone(srcExceptionItem.Start);
                                                         dstExceptionItem.End = CreateDateTimeTimeZone(srcExceptionItem.End);
+                                                        dstExceptionItem.IsReminderOn = srcExceptionItem.ReminderSet;
+                                                        if (srcExceptionItem.ReminderSet)
+                                                        {
+                                                            dstExceptionItem.ReminderMinutesBeforeStart = srcExceptionItem.ReminderMinutesBeforeStart;
+                                                        }
                                                         await dstExceptionItem.UpdateAsync();
                                                     }
                                                 }
@@ -708,6 +732,9 @@ namespace LumisCalendarSync.ViewModels
                     WriteMessageLog("{0} appointments not synced because they ended more than 30 days ago.", oldAppointments);
                     WriteMessageLog("{0} appointments not synced because they did not changed since their last sync.", unchangedAppointments);
                     WriteMessageLog("");
+
+                    Settings.Default.ForceNextSync = false;
+                    Settings.Default.Save();
                 }
             }
             catch (Exception ex)

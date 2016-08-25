@@ -94,5 +94,29 @@ namespace LumisCalendarSync.Properties {
                 this["ShowInfoNotifications"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string AppVersion {
+            get {
+                return ((string)(this["AppVersion"]));
+            }
+            set {
+                this["AppVersion"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool ForceNextSync {
+            get {
+                return ((bool)(this["ForceNextSync"]));
+            }
+            set {
+                this["ForceNextSync"] = value;
+            }
+        }
     }
 }

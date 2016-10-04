@@ -119,7 +119,7 @@ namespace LumisCalendarSync.ViewModels
 
         private void SaveMappingTable()
         {
-            var mappingFile = Path.Combine(myAppDataFolder, String.Format("Mapping-{0}.dat", SelectedCalendar.Id.GetHashCode()));
+            var mappingFile = Path.Combine(myAppDataFolder, String.Format("{0}-{1}.mapping", this.User.EmailAddress, SelectedCalendar.Name));
             try
             {
                 var serializer = new JavaScriptSerializer();
@@ -133,7 +133,17 @@ namespace LumisCalendarSync.ViewModels
 
         private void LoadMappingTable()
         {
-            var mappingFile = Path.Combine(myAppDataFolder, String.Format("Mapping-{0}.dat", SelectedCalendar.Id.GetHashCode()));
+            // Legacy: versions up to 2.0.8 where using a hashcode of the calendar id for the file name, which is unstable
+            // (different between debug and release, can be changed from .net version)
+            // So we move it to a mre reliable filename:
+            var legacyMappingFile = Path.Combine(myAppDataFolder, String.Format("Mapping-{0}.dat", SelectedCalendar.Id.GetHashCode()));
+            var mappingFile = Path.Combine(myAppDataFolder, String.Format("{0}-{1}.mapping", this.User.EmailAddress, SelectedCalendar.Name));
+
+            if (File.Exists(legacyMappingFile))
+            {
+                if(!File.Exists(mappingFile)) File.Move(legacyMappingFile, mappingFile );
+                else File.Delete(legacyMappingFile);
+            }
             if (!File.Exists(mappingFile))
             {
                 myMappingTable.Clear();
@@ -446,6 +456,7 @@ namespace LumisCalendarSync.ViewModels
 
                             IEvent dstAppointment = null;
                             operationChain += "Checking if target appointment alreay exists; ";
+                            string reasonForSync = "New Appointment";
                             if (targetItems.ContainsKey(srcAppointment.GlobalAppointmentID))
                             {
                                 dstAppointment = targetItems[srcAppointment.GlobalAppointmentID];
@@ -458,9 +469,24 @@ namespace LumisCalendarSync.ViewModels
                                     Events.Add(new EventModel(dstAppointment){IsSynchronized = true});
                                     continue;
                                 }
-                                // target appointments for which IsRecurring or IsAllDay changed are deleted
-                                // (we create a fresh one later on)
-                                if (IsRecurring(dstAppointment) || srcAppointment.IsRecurring || srcAppointment.AllDayEvent != dstAppointment.IsAllDay)
+
+                                // Check Semantical Changes
+                                reasonForSync = HasAppointmentInformationChanged(dstAppointment, srcAppointment);
+
+                                // if nothing changed and the appointment is not recurring, no sync is needed, just update the last synced time stamp:
+                                if (!(srcAppointment.IsRecurring || reasonForSync != null))
+                                {
+                                    SetLastSyncTimeStamp(srcAppointment);
+                                    unchangedAppointments++;
+                                    Events.Add(new EventModel(dstAppointment) { IsSynchronized = true });
+                                    continue;
+                                }
+
+                                // we get here if something has changed OR the appointment is recurring.
+
+                                // for appointments needing sync, which are Recurring or the IsAllDay attribute changed, are deleted since we cannot update them correctly.
+                                // (we create a new target appoitment for them later on!)
+                                if (reasonForSync != null && (srcAppointment.IsRecurring || srcAppointment.AllDayEvent != dstAppointment.IsAllDay))
                                 {
                                     await dstAppointment.DeleteAsync();
                                     dstAppointment = null;
@@ -468,14 +494,13 @@ namespace LumisCalendarSync.ViewModels
                             }
 
                             // this will indicate if we create a new appointment in the target folder
-                            bool dstAppointmentIsNew = false;
+                            bool dstAppointmentIsNew = (dstAppointment == null);
                             try
                             {
-                                WriteMessageLog("  Syncing [{0}] ", srcAppointment.Subject);
+                                WriteMessageLog("  Syncing [{0}]: {1}", srcAppointment.Subject, reasonForSync);
 
                                 if (dstAppointment == null)
                                 {
-                                    dstAppointmentIsNew = true;
                                     operationChain += "Creating a new target appointment; ";
                                     dstAppointment = new Event();
 
@@ -486,16 +511,20 @@ namespace LumisCalendarSync.ViewModels
                                     }
                                 }
 
-                                operationChain += "Updating Subject; ";
-                                dstAppointment.Subject = srcAppointment.Subject;
-                                operationChain += "Updating Location; ";
-                                dstAppointment.Location = new Location {DisplayName = srcAppointment.Location};
-                                operationChain += "Updating BusyStatus; ";
-                                dstAppointment.ShowAs = GetFreeBusyStatus(srcAppointment.BusyStatus);
-                                dstAppointment.IsReminderOn = srcAppointment.ReminderSet;
-                                if (srcAppointment.ReminderSet)
+                                if (reasonForSync != null)
                                 {
-                                    dstAppointment.ReminderMinutesBeforeStart = srcAppointment.ReminderMinutesBeforeStart;
+                                    operationChain += "Updating Subject; ";
+                                    dstAppointment.Subject = srcAppointment.Subject;
+                                    operationChain += "Updating Location; ";
+                                    dstAppointment.Location = new Location {DisplayName = srcAppointment.Location};
+                                    operationChain += "Updating BusyStatus; ";
+                                    dstAppointment.ShowAs = GetFreeBusyStatus(srcAppointment.BusyStatus);
+                                    dstAppointment.IsReminderOn = srcAppointment.ReminderSet;
+
+                                    if (srcAppointment.ReminderSet)
+                                    {
+                                        dstAppointment.ReminderMinutesBeforeStart = srcAppointment.ReminderMinutesBeforeStart;
+                                    }
                                 }
 
                                 if (!srcAppointment.IsRecurring)
@@ -510,7 +539,6 @@ namespace LumisCalendarSync.ViewModels
                                     operationChain += "Updating Duration; ";
                                     dstAppointment.End = CreateDateTimeTimeZone(srcAppointment.Start + TimeSpan.FromMinutes(srcAppointment.Duration));
 
-                                    operationChain += "Updating originalLastUpdate; ";
                                     operationChain += "Saving; ";
                                     if (dstAppointmentIsNew)
                                     {
@@ -528,83 +556,35 @@ namespace LumisCalendarSync.ViewModels
                                 {
                                     operationChain += "Recurring; ";
                                     var srcPattern = srcAppointment.GetRecurrencePattern();
-                                    var dstRecurrence = dstAppointment.Recurrence ?? (dstAppointment.Recurrence = new PatternedRecurrence
-                                    {
-                                        Pattern = new RecurrencePattern(),
-                                        Range = new RecurrenceRange()
-                                    });
 
-                                    operationChain += "Updating RecurreneType; ";
-                                    dstRecurrence.Pattern.Type = GetPatternType(srcPattern.RecurrenceType);
-
-                                    operationChain += "Updating StartTime; ";
-                                    dstAppointment.Start = CreateDateTimeTimeZone(srcPattern.StartTime);
-                                    operationChain += "Updating Duration; ";
-                                    dstAppointment.End = CreateDateTimeTimeZone(srcPattern.EndTime);
-                                    WriteMessageLog("  recurring {0} at {1} ", dstRecurrence.Pattern.Type, dstAppointment.Start.DateTime.Substring(11, 8));
-
-                                    switch (srcPattern.RecurrenceType)
-                                    {
-                                        case OlRecurrenceType.olRecursDaily:
-                                            break;
-                                        case OlRecurrenceType.olRecursWeekly:
-                                            dstRecurrence.Pattern.DaysOfWeek = CreateDaysOfWeekList(srcPattern.DayOfWeekMask);
-                                            break;
-                                        case OlRecurrenceType.olRecursMonthly:
-                                            dstRecurrence.Pattern.DayOfMonth = srcPattern.DayOfMonth;
-                                            break;
-                                        case OlRecurrenceType.olRecursMonthNth:
-                                            // Example: every second tuesday of the month, every 2 months would be:
-                                            // Index will be 1 (first == 0, second == 1, ...)
-                                            // DaysOfWeek will be tuesday
-                                            // Interval will be 2 (every two months), covered below the switch for all cases.
-                                            dstRecurrence.Pattern.Index = GetWeekIndex(srcPattern.Instance);
-                                            dstRecurrence.Pattern.DaysOfWeek = CreateDaysOfWeekList(srcPattern.DayOfWeekMask);
-                                            break;
-                                        case OlRecurrenceType.olRecursYearly:
-                                            dstRecurrence.Pattern.DayOfMonth = srcPattern.DayOfMonth;
-                                            dstRecurrence.Pattern.Month = srcPattern.MonthOfYear;
-                                            break;
-                                        case OlRecurrenceType.olRecursYearNth:
-                                            // example: every 2nd tuesday of january, every 2 years would be:
-                                            // index = 1 (0 is first, 1 is seccond, ...),
-                                            // DaysOfWeek = Tuesday 
-                                            // Month would be 1 (january is 1, december is 12)
-                                            // interval will be 2, covered below the else.
-                                            dstRecurrence.Pattern.Index = GetWeekIndex(srcPattern.Instance);
-                                            dstRecurrence.Pattern.DaysOfWeek = CreateDaysOfWeekList(srcPattern.DayOfWeekMask);
-                                            dstRecurrence.Pattern.Month = srcPattern.MonthOfYear;
-                                            break;
-
-                                    }
-
-                                    dstRecurrence.Range.StartDate = srcPattern.PatternStartDate.ToString("yyyy-MM-dd");
-                                    dstRecurrence.Pattern.Interval = srcPattern.Interval > 0 ? srcPattern.Interval : 1;
-                                    if (srcPattern.NoEndDate)
-                                    {
-                                        dstRecurrence.Range.Type = RecurrenceRangeType.NoEnd;
-                                    }
-                                    else if (srcPattern.Occurrences >= 0)
-                                    {
-                                        dstRecurrence.Range.Type = RecurrenceRangeType.Numbered;
-                                        dstRecurrence.Range.NumberOfOccurrences = srcPattern.Occurrences;
-                                    }
-                                    else
-                                    {
-                                        dstRecurrence.Range.Type = RecurrenceRangeType.EndDate;
-                                        dstRecurrence.Range.EndDate = srcPattern.PatternEndDate.ToString("yyyy-MM-dd");
-                                    }
-
-                                    operationChain += "Saving; ";
+                                    // if the recurrenct appointment changed, we have created a new one; else, we need no change for the master event.
                                     if (dstAppointmentIsNew)
                                     {
+                                        var dstRecurrence = dstAppointment.Recurrence ?? (dstAppointment.Recurrence = new PatternedRecurrence
+                                        {
+                                            Pattern = new RecurrencePattern(),
+                                            Range = new RecurrenceRange()
+                                        });
+
+                                        operationChain += "Updating RecurreneType; ";
+                                        dstRecurrence.Pattern.Type = GetPatternType(srcPattern.RecurrenceType);
+
+                                        operationChain += "Updating StartTime; ";
+                                        dstAppointment.Start = CreateDateTimeTimeZone(srcPattern.StartTime);
+                                        operationChain += "Updating Duration; ";
+                                        dstAppointment.End = CreateDateTimeTimeZone(srcPattern.EndTime);
+                                        WriteMessageLog("  recurring {0} at {1} ", dstRecurrence.Pattern.Type, dstAppointment.Start.DateTime.Substring(11, 8));
+
+                                        UpdateDestinationPattern(srcPattern, dstRecurrence);
+
+                                        operationChain += "Saving; ";
                                         await remoteCalendarEvents.AddEventAsync(dstAppointment);
                                         dstAppointmentItems.Add(dstAppointment);
                                         AddToMappingTable(srcAppointment, dstAppointment);
                                     }
                                     else
                                     {
-                                        await dstAppointment.UpdateAsync();
+                                        WriteMessageLog("  No change for the master series, no update needed");
                                     }
                                     Events.Add(new EventModel(dstAppointment) { IsSynchronized = true });
 
@@ -701,6 +681,8 @@ namespace LumisCalendarSync.ViewModels
                                 else
                                 {
                                     WriteMessageLog("  ERROR: Could not sync appointment [{0}].", srcAppointment.Subject);
+                                    WriteMessageLog("  {0}", ex.ToString());
+                                    WriteMessageLog("");
                                 }
                                 errorUpdated++;
                             }
@@ -757,6 +739,147 @@ namespace LumisCalendarSync.ViewModels
             }
         }
 
+        private static void UpdateDestinationPattern(Microsoft.Office.Interop.Outlook.RecurrencePattern srcPattern, PatternedRecurrence dstRecurrence)
+        {
+            switch (srcPattern.RecurrenceType)
+            {
+                case OlRecurrenceType.olRecursDaily:
+                    break;
+                case OlRecurrenceType.olRecursWeekly:
+                    dstRecurrence.Pattern.DaysOfWeek = CreateDaysOfWeekList(srcPattern.DayOfWeekMask);
+                    break;
+                case OlRecurrenceType.olRecursMonthly:
+                    dstRecurrence.Pattern.DayOfMonth = srcPattern.DayOfMonth;
+                    break;
+                case OlRecurrenceType.olRecursMonthNth:
+                    // Example: every second tuesday of the month, every 2 months would be:
+                    // Index will be 1 (first == 0, second == 1, ...)
+                    // DaysOfWeek will be tuesday
+                    // Interval will be 2 (every two months), covered below the switch for all cases.
+                    dstRecurrence.Pattern.Index = GetWeekIndex(srcPattern.Instance);
+                    dstRecurrence.Pattern.DaysOfWeek = CreateDaysOfWeekList(srcPattern.DayOfWeekMask);
+                    break;
+                case OlRecurrenceType.olRecursYearly:
+                    dstRecurrence.Pattern.DayOfMonth = srcPattern.DayOfMonth;
+                    dstRecurrence.Pattern.Month = srcPattern.MonthOfYear;
+                    break;
+                case OlRecurrenceType.olRecursYearNth:
+                    // example: every 2nd tuesday of january, every 2 years would be:
+                    // index = 1 (0 is first, 1 is seccond, ...),
+                    // DaysOfWeek = Tuesday 
+                    // Month would be 1 (january is 1, december is 12)
+                    // interval will be 2, covered below the else.
+                    dstRecurrence.Pattern.Index = GetWeekIndex(srcPattern.Instance);
+                    dstRecurrence.Pattern.DaysOfWeek = CreateDaysOfWeekList(srcPattern.DayOfWeekMask);
+                    dstRecurrence.Pattern.Month = srcPattern.MonthOfYear;
+                    break;
+            }
+
+            dstRecurrence.Range.StartDate = srcPattern.PatternStartDate.ToString("yyyy-MM-dd");
+            dstRecurrence.Pattern.Interval = srcPattern.Interval > 0 ? srcPattern.Interval : 1;
+            if (srcPattern.NoEndDate)
+            {
+                dstRecurrence.Range.Type = RecurrenceRangeType.NoEnd;
+            }
+            else if (srcPattern.Occurrences >= 0)
+            {
+                dstRecurrence.Range.Type = RecurrenceRangeType.Numbered;
+                dstRecurrence.Range.NumberOfOccurrences = srcPattern.Occurrences;
+            }
+            else
+            {
+                dstRecurrence.Range.Type = RecurrenceRangeType.EndDate;
+                dstRecurrence.Range.EndDate = srcPattern.PatternEndDate.ToString("yyyy-MM-dd");
+            }
+        }
+
+        private string HasAppointmentInformationChanged(IEvent dstAppointment, AppointmentItem srcAppointment)
+        {
+            if (IsRecurring(dstAppointment) != srcAppointment.IsRecurring) return "Recurrence changed";
+            if (dstAppointment.IsAllDay != srcAppointment.AllDayEvent) return "All Day changed";
+            if (dstAppointment.Subject != srcAppointment.Subject) return "Subject Changed";
+            if (dstAppointment.Location == null) return "Destination Location is empty";
+            if (!String.IsNullOrEmpty(dstAppointment.Location.DisplayName) || !String.IsNullOrEmpty(srcAppointment.Location))
+            {
+                if (dstAppointment.Location.DisplayName != srcAppointment.Location)
+                {
+                    return "Location changed";
+                }
+            }
+            if (dstAppointment.ShowAs != GetFreeBusyStatus(srcAppointment.BusyStatus)) return "FreeBusyStatus changed";
+            if (dstAppointment.IsReminderOn != srcAppointment.ReminderSet) return "ReminderSet changed";
+            if (srcAppointment.ReminderSet)
+            {
+                if (dstAppointment.ReminderMinutesBeforeStart != srcAppointment.ReminderMinutesBeforeStart) return "Reminder value changed";
+            }
+
+            if (!srcAppointment.IsRecurring)
+            {
+                if (!GetLocalTime(dstAppointment.Start).Equals(srcAppointment.Start)) return "Start changed";
+                if (!GetLocalTime(dstAppointment.End).Equals(srcAppointment.End)) return "Duration changed";
+                return null;
+            }
+
+            var srcPattern = srcAppointment.GetRecurrencePattern();
+            var dstRecurrence = dstAppointment.Recurrence;
+            
+            if (srcPattern == null) return "Source Recurrence Pattern is not set";
+            if (dstRecurrence == null) return "Destination recurrence pattern is not set";
+            if (dstRecurrence.Pattern.Type != GetPatternType(srcPattern.RecurrenceType)) return "RecurrenceType changed";
+            if (!IsTimeIdentical(GetLocalTime(dstAppointment.Start), srcPattern.StartTime)) return "RecurringStart changed";
+            if (!IsTimeIdentical(GetLocalTime(dstAppointment.End), srcPattern.EndTime)) return "RecurringEnd changed";
+
+            // we create a local temp srcRecurrence to ease up the checks:
+            var srcRecurrence = new PatternedRecurrence
+            {
+                Pattern = new RecurrencePattern(),
+                Range = new RecurrenceRange()
+            };
+            UpdateDestinationPattern(srcPattern, srcRecurrence);
+
+            switch (srcPattern.RecurrenceType)
+            {
+                case OlRecurrenceType.olRecursWeekly:
+                    if (!dstRecurrence.Pattern.DaysOfWeek.SequenceEqual(srcRecurrence.Pattern.DaysOfWeek)) return "Weekly DaysOfWeek changed";
+                    break;
+                case OlRecurrenceType.olRecursMonthly:
+                    if (dstRecurrence.Pattern.DayOfMonth != srcRecurrence.Pattern.DayOfMonth) return "Monthly DayOfMonth changed";
+                    break;
+                case OlRecurrenceType.olRecursMonthNth:
+                    if (dstRecurrence.Pattern.Index != srcRecurrence.Pattern.Index) return "MonthNth Index changed";
+                    if (dstRecurrence.Pattern.DaysOfWeek != srcRecurrence.Pattern.DaysOfWeek) return "MonthlyNth DaysOfWeek changed";
+                    break;
+                case OlRecurrenceType.olRecursYearly:
+                    if (dstRecurrence.Pattern.DayOfMonth != srcRecurrence.Pattern.DayOfMonth) return "Yearly DayOfMonth changed";
+                    if (dstRecurrence.Pattern.Month != srcRecurrence.Pattern.Month) return "Yearly Month changed";
+                    break;
+                case OlRecurrenceType.olRecursYearNth:
+                    if (dstRecurrence.Pattern.Index != srcRecurrence.Pattern.Index) return "YearlyNth Index changed";
+                    if (!dstRecurrence.Pattern.DaysOfWeek.SequenceEqual(srcRecurrence.Pattern.DaysOfWeek)) return "YearlyNth DaysOfWeek changed";
+                    if (dstRecurrence.Pattern.Month != srcRecurrence.Pattern.Month) return "YearlyNth Month changed";
+                    break;
+            }
+
+            if (dstRecurrence.Range.StartDate != srcRecurrence.Range.StartDate) return "Range StartDate Changed";
+            if (dstRecurrence.Pattern.Interval != srcRecurrence.Pattern.Interval) return "Pattern Interval changed";
+            if (srcPattern.NoEndDate)
+            {
+                if (dstRecurrence.Range.Type != RecurrenceRangeType.NoEnd) return "Pattern NoEndDate changed";
+            }
+            else if (srcPattern.Occurrences >= 0)
+            {
+                if (dstRecurrence.Range.Type != RecurrenceRangeType.Numbered) return "Range Type changed";
+                if (dstRecurrence.Range.NumberOfOccurrences != srcPattern.Occurrences) return "Range NumberOfOccurrences changed";
+            }
+            else
+            {
+                if (dstRecurrence.Range.Type != RecurrenceRangeType.EndDate) return "Range Type changed";
+                if( !dstRecurrence.Range.EndDate.Equals(srcRecurrence.Range.EndDate)) return "End Date changed";
+            }
+
+            return null;
+        }
+
         async private Task<List<IEvent>> GetEventInstancesAsync(IPagedCollection<IEvent> eventCollection)
         {
             var result = new List<IEvent>();
@@ -788,12 +911,12 @@ namespace LumisCalendarSync.ViewModels
             return deletedItems;
         }
 
-        private WeekIndex GetWeekIndex(int p)
+        private static WeekIndex GetWeekIndex(int p)
         {
             return (WeekIndex) (p-1);
         }
 
-        private IList<DayOfWeek> CreateDaysOfWeekList(OlDaysOfWeek olDaysOfWeekMask)
+        private static IList<DayOfWeek> CreateDaysOfWeekList(OlDaysOfWeek olDaysOfWeekMask)
         {
             int olDaysOfWeek = (int) olDaysOfWeekMask;
 
@@ -829,7 +952,7 @@ namespace LumisCalendarSync.ViewModels
             return result;
         }
 
-        private RecurrencePatternType GetPatternType(OlRecurrenceType olRecurrenceType)
+        private static RecurrencePatternType GetPatternType(OlRecurrenceType olRecurrenceType)
         {
             switch (olRecurrenceType)
             {
@@ -848,7 +971,7 @@ namespace LumisCalendarSync.ViewModels
             }
         }
 
-        private DateTimeTimeZone CreateDateTimeTimeZone(DateTime dateTime)
+        private static DateTimeTimeZone CreateDateTimeTimeZone(DateTime dateTime)
         {
             return new DateTimeTimeZone
             {
@@ -857,18 +980,36 @@ namespace LumisCalendarSync.ViewModels
             };
         }
 
-        private FreeBusyStatus GetFreeBusyStatus(OlBusyStatus olBusyStatus)
+        private static DateTime GetLocalTime(DateTimeTimeZone dateTime)
+        {
+            var dt = DateTime.Parse(dateTime.DateTime);
+            var timeZoneInfo = TimeZoneInfo.Utc;
+            if (!string.IsNullOrWhiteSpace(dateTime.TimeZone))
+            {
+                timeZoneInfo = TimeZoneInfo.FindSystemTimeZoneById(dateTime.TimeZone);
+            }
+            return TimeZoneInfo.ConvertTime(dt, timeZoneInfo, TimeZoneInfo.Local);            
+        }
+
+        private static bool IsTimeIdentical(DateTime srcDateTime, DateTime dstDateTime)
+        {
+            if (srcDateTime.Hour != dstDateTime.Hour) return false;
+            if (srcDateTime.Minute != dstDateTime.Minute) return false;
+            return true;
+        }
+
+        private static FreeBusyStatus GetFreeBusyStatus(OlBusyStatus olBusyStatus)
         {
             switch (olBusyStatus)
             {
                 case OlBusyStatus.olBusy:
                     return FreeBusyStatus.Busy;
-                case OlBusyStatus.olFree:
-                    return FreeBusyStatus.Free;
                 case OlBusyStatus.olOutOfOffice:
                     return FreeBusyStatus.Oof;
                 case OlBusyStatus.olTentative:
                     return FreeBusyStatus.Tentative;
+                //case OlBusyStatus.olFree:
+                //    return FreeBusyStatus.Free;
                 default:
                     return FreeBusyStatus.Unknown;
             }
@@ -1192,7 +1333,7 @@ namespace LumisCalendarSync.ViewModels
             shortcut.TargetPath = System.Reflection.Assembly.GetExecutingAssembly().Location;
             shortcut.WorkingDirectory = System.Reflection.Assembly.GetExecutingAssembly().Location;
             shortcut.Arguments = "/Minimized";
-            shortcut.Description = "Lumis Calendar Sync";
+            shortcut.Description = "Lumis Calendar Sync Autostart";
             shortcut.Save();
         }
 

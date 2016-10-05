@@ -29,8 +29,8 @@ namespace LumisCalendarSync.ViewModels
         // When we change the list synced attributes, we change this CurrentAppVersion to force a sync of all appointments 
         // at the first sync with the new app version. 
         // Best Practice: if we change some code (fix or new feature) which needs a full sync, set this to the same value as in the MSI.
-        // But not needing to set it vor every new MSI version: if no sync must be forced, don't set it.
-        private const string CurrentAppVersion = "2.0.8.0";
+        // But not needing to set it vor every new MSI version: if no sync must be forced, don't change it.
+        private const string CurrentAppVersion = "2.0.11.0";
 
         public MainViewModel()
         {
@@ -470,11 +470,18 @@ namespace LumisCalendarSync.ViewModels
                                     continue;
                                 }
 
-                                // Check Semantical Changes
-                                reasonForSync = HasAppointmentInformationChanged(dstAppointment, srcAppointment);
+                                if (Settings.Default.ForceNextSync)
+                                {
+                                    reasonForSync = "Application Updated";
+                                }
+                                else
+                                {
+                                    // Check Semantical Changes
+                                    reasonForSync = HasAppointmentInformationChanged(dstAppointment, srcAppointment);
+                                }
 
                                 // if nothing changed and the appointment is not recurring, no sync is needed, just update the last synced time stamp:
-                                if (!(srcAppointment.IsRecurring || reasonForSync != null))
+                                if (reasonForSync == null && !srcAppointment.IsRecurring )
                                 {
                                     SetLastSyncTimeStamp(srcAppointment);
                                     unchangedAppointments++;
@@ -488,6 +495,7 @@ namespace LumisCalendarSync.ViewModels
                                 // (we create a new target appoitment for them later on!)
                                 if (reasonForSync != null && (srcAppointment.IsRecurring || srcAppointment.AllDayEvent != dstAppointment.IsAllDay))
                                 {
+                                    RemoveFromMappingTable(dstAppointment);
                                     await dstAppointment.DeleteAsync();
                                     dstAppointment = null;
                                 }
@@ -592,74 +600,85 @@ namespace LumisCalendarSync.ViewModels
                                     var srcExceptions = srcPattern.Exceptions;
                                     try
                                     {
-                                        if (srcExceptions == null || srcExceptions.Count <= 0)
-                                        {
-                                            WriteMessageLog("    This recurring appointment has no exceptions.");
-                                        }
-                                        else
-                                        {
-                                            var intervalStart = DateTime.Now - TimeSpan.FromDays(30);
-                                            var intervalEnd = DateTime.Now + TimeSpan.FromDays(90);
+                                        var intervalStart = DateTime.Now - TimeSpan.FromDays(30);
+                                        var intervalEnd = DateTime.Now + TimeSpan.FromDays(90);
                                             
-                                            WriteMessageLog("    Syncing exceptions between {0} and {1} for this recurring appointment:", intervalStart.ToShortDateString(), intervalEnd.ToShortDateString());
+                                        WriteMessageLog("    Syncing exceptions between {0} and {1} for this recurring appointment:", intervalStart.ToShortDateString(), intervalEnd.ToShortDateString());
 
-                                            var eventCollection = await remoteCalendarEvents[dstAppointment.Id].GetInstances(
-                                                new DateTimeOffset(intervalStart), new DateTimeOffset(intervalEnd)).ExecuteAsync();
+                                        var eventCollection = await remoteCalendarEvents[dstAppointment.Id].GetInstances(
+                                            new DateTimeOffset(intervalStart), new DateTimeOffset(intervalEnd)).ExecuteAsync();
 
-                                            List<IEvent> remoteInstances = await GetEventInstancesAsync(eventCollection);
+                                        var remoteInstances = await GetEventInstancesAsync(eventCollection);
 
-                                            foreach (Microsoft.Office.Interop.Outlook.Exception srcException in srcExceptions)
+                                        foreach (Microsoft.Office.Interop.Outlook.Exception srcException in srcExceptions)
+                                        {
+                                            var originalDate = srcException.OriginalDate.ToString("O").Substring(0,10);
+
+                                            var srcExceptionItem = srcException.Deleted ? null : srcException.AppointmentItem;
+
+                                            try
                                             {
-                                                var originalDate = new DateTime(srcException.OriginalDate.Year, srcException.OriginalDate.Month,
-                                                    srcException.OriginalDate.Day).ToString("yyyy-MM-dd");
-
-                                                AppointmentItem srcExceptionItem = null;
-
-                                                try
+                                                IEvent dstExceptionItem = null;
+                                                if (myMappingTable[srcAppointment.GlobalAppointmentID].ExceptionIds.ContainsKey(originalDate))
                                                 {
-                                                    var dstExceptionItem = remoteInstances.FirstOrDefault(ri => ri.Start.DateTime.Substring(0, 10) == originalDate);
-                                                    if (dstExceptionItem == null)
+                                                    var lastChange = srcExceptionItem != null ? srcExceptionItem.LastModificationTime.ToString("O") : null;
+                                                    if (lastChange == myMappingTable[srcAppointment.GlobalAppointmentID].ExceptionIds[originalDate].LastSyncTimeStamp)
                                                     {
-                                                        // out of interval, ignore this
                                                         continue;
                                                     }
-                                                    // we need to re-fetch it becasue changes in this loop on one of the items might affect the other items.
-                                                    // But the Id is stable!
-                                                    dstExceptionItem = await remoteCalendarEvents[dstExceptionItem.Id].ExecuteAsync();
-                                                    if (srcException.Deleted)
+                                                    var remoteId = myMappingTable[srcAppointment.GlobalAppointmentID].ExceptionIds[originalDate].Id;
+                                                    if (remoteId != null)
                                                     {
-                                                        await dstExceptionItem.DeleteAsync();
-                                                        WriteMessageLog("      On {0}: occurence cancelled.", originalDate);
-                                                    }
-                                                    else
-                                                    {
-                                                        srcExceptionItem = srcException.AppointmentItem;
-                                                        WriteMessageLog("      On {0}: shifting occurence to {1}.", originalDate, srcExceptionItem.Start);
-
-                                                        dstExceptionItem.SeriesMasterId = dstAppointment.Id;
-                                                        dstExceptionItem.Type = EventType.Exception;
-                                                        dstExceptionItem.Subject = srcExceptionItem.Subject;
-                                                        dstExceptionItem.Location = new Location {DisplayName = srcExceptionItem.Location};
-                                                        dstExceptionItem.Start = CreateDateTimeTimeZone(srcExceptionItem.Start);
-                                                        dstExceptionItem.End = CreateDateTimeTimeZone(srcExceptionItem.End);
-                                                        dstExceptionItem.IsReminderOn = srcExceptionItem.ReminderSet;
-                                                        if (srcExceptionItem.ReminderSet)
-                                                        {
-                                                            dstExceptionItem.ReminderMinutesBeforeStart = srcExceptionItem.ReminderMinutesBeforeStart;
-                                                        }
-                                                        await dstExceptionItem.UpdateAsync();
+                                                        dstExceptionItem = remoteInstances.FirstOrDefault(ri => ri.Id == remoteId);
                                                     }
                                                 }
-
-                                                finally
+                                                else
                                                 {
-                                                    if (srcExceptionItem != null)
+                                                    dstExceptionItem =
+                                                        remoteInstances.FirstOrDefault(ri => ri.Start.DateTime.Substring(0, 10) == originalDate);
+                                                }
+                                                if (dstExceptionItem == null)
+                                                {
+                                                    // out of interval, ignore this
+                                                    continue;
+                                                }
+                                                // we need to re-fetch it becasue changes in this loop on one of the items might affect the other items.
+                                                // But the Id is stable!
+                                                dstExceptionItem = await remoteCalendarEvents[dstExceptionItem.Id].ExecuteAsync();
+                                                if (srcException.Deleted)
+                                                {
+                                                    await dstExceptionItem.DeleteAsync();
+                                                    WriteMessageLog("      On {0}: cancelled.", originalDate);
+                                                }
+                                                else
+                                                {
+                                                    dstExceptionItem.SeriesMasterId = dstAppointment.Id;
+                                                    dstExceptionItem.Type = EventType.Exception;
+                                                    dstExceptionItem.Subject = srcExceptionItem.Subject;
+                                                    dstExceptionItem.Location = new Location {DisplayName = srcExceptionItem.Location};
+                                                    dstExceptionItem.Start = CreateDateTimeTimeZone(srcExceptionItem.Start);
+                                                    dstExceptionItem.End = CreateDateTimeTimeZone(srcExceptionItem.End);
+                                                    dstExceptionItem.IsReminderOn = srcExceptionItem.ReminderSet;
+                                                    if (srcExceptionItem.ReminderSet)
                                                     {
-                                                        Marshal.ReleaseComObject(srcExceptionItem);
+                                                        dstExceptionItem.ReminderMinutesBeforeStart = srcExceptionItem.ReminderMinutesBeforeStart;
                                                     }
+                                                    await dstExceptionItem.UpdateAsync();
+                                                    WriteMessageLog("      On {0}: updated , start at {1}.", originalDate, srcExceptionItem.Start.ToString("O"));
+
+                                                    UpdateExceptionInMappingTable(srcAppointment.GlobalAppointmentID, originalDate, dstExceptionItem.Id);
+                                                }
+                                            }
+
+                                            finally
+                                            {
+                                                if (srcExceptionItem != null)
+                                                {
+                                                    Marshal.ReleaseComObject(srcExceptionItem);
                                                 }
                                             }
                                         }
+                                        WriteMessageLog("    {0} Exceptions up to date", srcExceptions.Count);
                                     }
                                     finally
                                     {
@@ -738,6 +757,7 @@ namespace LumisCalendarSync.ViewModels
                 }
             }
         }
+
 
         private static void UpdateDestinationPattern(Microsoft.Office.Interop.Outlook.RecurrencePattern srcPattern, PatternedRecurrence dstRecurrence)
         {
@@ -820,6 +840,8 @@ namespace LumisCalendarSync.ViewModels
                 return null;
             }
 
+            // from here on, we deal with a recurring appointment!
+
             var srcPattern = srcAppointment.GetRecurrencePattern();
             var dstRecurrence = dstAppointment.Recurrence;
             
@@ -875,6 +897,38 @@ namespace LumisCalendarSync.ViewModels
             {
                 if (dstRecurrence.Range.Type != RecurrenceRangeType.EndDate) return "Range Type changed";
                 if( !dstRecurrence.Range.EndDate.Equals(srcRecurrence.Range.EndDate)) return "End Date changed";
+            }
+
+            var exceptions = srcPattern.Exceptions;
+            try
+            {
+                if (exceptions.Count != myMappingTable[srcAppointment.GlobalAppointmentID].ExceptionIds.Count)
+                {
+                    return "Series Exceptions count Changed";
+                }
+                foreach (Microsoft.Office.Interop.Outlook.Exception srcException in exceptions)
+                {
+                    var originalDate = srcException.OriginalDate.ToString("O").Substring(0, 10);
+
+                    if (!myMappingTable[srcAppointment.GlobalAppointmentID].ExceptionIds.ContainsKey(originalDate))
+                    {
+                        return "Series Exception changed";
+                    }
+
+                    if (srcException.Deleted && myMappingTable[srcAppointment.GlobalAppointmentID].ExceptionIds[originalDate].Id != null)
+                    {
+                        return "Series Exception deleted";
+                    }
+
+                    if (!srcException.Deleted && myMappingTable[srcAppointment.GlobalAppointmentID].ExceptionIds[originalDate].Id == null)
+                    {
+                        return "Series Exception undeleted";
+                    }
+                }
+            }
+            finally
+            {
+                Marshal.ReleaseComObject(exceptions);
             }
 
             return null;
@@ -1032,6 +1086,39 @@ namespace LumisCalendarSync.ViewModels
         private void SetLastSyncTimeStamp(AppointmentItem srcAppointment)
         {
             myMappingTable[srcAppointment.GlobalAppointmentID].LastSyncTimeStamp = srcAppointment.LastModificationTime.ToString("O");
+            if (srcAppointment.IsRecurring)
+            {
+                var pattern = srcAppointment.GetRecurrencePattern();
+                var exceptions = pattern.Exceptions;
+                try
+                {
+                    foreach (Microsoft.Office.Interop.Outlook.Exception exception in exceptions)
+                    {
+                        var originalDate = exception.OriginalDate.ToString("O").Substring(0, 10);
+                        if (!myMappingTable[srcAppointment.GlobalAppointmentID].ExceptionIds.ContainsKey(originalDate))
+                        {
+                            myMappingTable[srcAppointment.GlobalAppointmentID].ExceptionIds.Add(originalDate, new EventIdentificationInfo());
+                        }
+                        if (!exception.Deleted)
+                        {
+                            var exceptionItem = exception.AppointmentItem;
+                            myMappingTable[srcAppointment.GlobalAppointmentID].ExceptionIds[originalDate].LastSyncTimeStamp =
+                                exceptionItem.LastModificationTime.ToString("O");
+                            Marshal.ReleaseComObject(exceptionItem);
+                        }
+                        else
+                        {
+                            myMappingTable[srcAppointment.GlobalAppointmentID].ExceptionIds[originalDate].LastSyncTimeStamp = null;
+                            myMappingTable[srcAppointment.GlobalAppointmentID].ExceptionIds[originalDate].Id = null;
+                        }
+                    }
+                }
+                finally
+                {
+                    Marshal.ReleaseComObject(exceptions);
+                    Marshal.ReleaseComObject(pattern);
+                }
+            }
         }
 
         private void AddToMappingTable(AppointmentItem srcAppointment, IEvent dstAppointment)
@@ -1076,6 +1163,42 @@ namespace LumisCalendarSync.ViewModels
                 myMappingTable.Remove(key);
             }
             return targetItems;
+        }
+
+        private Dictionary<string, IEvent> GetAllSyncedExceptions(string srcAppointmentId, IList<IEvent> dstAppointmentInstanceItems)
+        {
+            if (!myMappingTable.ContainsKey(srcAppointmentId) || myMappingTable[srcAppointmentId].ExceptionIds == null)
+            {
+                throw new ArgumentException("The source appointment must be a recurring, synced appointment", "srcAppointmentId");
+            }
+
+            var targetItems = new Dictionary<string, IEvent>();
+            var keysToBeRemoved = new List<string>();
+            foreach (var key in myMappingTable[srcAppointmentId].ExceptionIds.Keys)
+            {
+                var dst = dstAppointmentInstanceItems.FirstOrDefault(e => e.Id == myMappingTable[srcAppointmentId].ExceptionIds[key].Id);
+                if (dst != null) targetItems.Add(key, dst);
+                else keysToBeRemoved.Add(key);
+            }
+            foreach (var key in keysToBeRemoved)
+            {
+                myMappingTable[srcAppointmentId].ExceptionIds.Remove(key);
+            }
+            return targetItems;
+        }
+
+        private void UpdateExceptionInMappingTable(string srcAppointmentId, string originalDate, string dstAppointmentId)
+        {
+            if (!myMappingTable.ContainsKey(srcAppointmentId) || myMappingTable[srcAppointmentId].ExceptionIds == null)
+            {
+                throw new ArgumentException("The source appointment must be a recurring, synced appointment", "srcAppointmentId");
+            }
+
+            if (!myMappingTable[srcAppointmentId].ExceptionIds.ContainsKey(originalDate))
+            {
+                myMappingTable[srcAppointmentId].ExceptionIds.Add(originalDate, new EventIdentificationInfo());
+            }
+            myMappingTable[srcAppointmentId].ExceptionIds[originalDate].Id = dstAppointmentId;
         }
 
         async private Task DeleteEventAsync(EventModel e)
@@ -1331,8 +1454,9 @@ namespace LumisCalendarSync.ViewModels
                 "LumisCalendarSync" + ".lnk");
 
             shortcut.TargetPath = System.Reflection.Assembly.GetExecutingAssembly().Location;
-            shortcut.WorkingDirectory = System.Reflection.Assembly.GetExecutingAssembly().Location;
-            shortcut.Arguments = "/Minimized";
+            shortcut.WorkingDirectory = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+            // shortcut.Arguments = "/Minimized";
+            shortcut.WindowStyle = 7;
             shortcut.Description = "Lumis Calendar Sync Autostart";
             shortcut.Save();
         }

@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+
 
 namespace LumisCalendarSync.Model
 {
@@ -6,5 +8,11 @@ namespace LumisCalendarSync.Model
     {
         public string Id { get; set; }
         public String LastSyncTimeStamp { get; set; }
+        public Dictionary<string, EventIdentificationInfo> ExceptionIds { get; set; }
+
+        public EventIdentificationInfo()
+        {
+            ExceptionIds = new Dictionary<string, EventIdentificationInfo>();
+        }
     }
 }

@@ -14,7 +14,6 @@
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
         <StackPanel
             Grid.Row="0"
@@ -79,54 +78,85 @@
                 Content="Start when I log in"/>
 
         </StackPanel>
-        <DataGrid
+        <Grid
             Grid.Row="1"
-            Margin="12"
-            AutoGenerateColumns="False"
-            RowHeaderWidth="0"
-            IsReadOnly="True"
-            ItemsSource="{Binding Events}"
-            SelectedValue="{Binding SelectedEvent, Mode=TwoWay}"
+            Margin="12,0">            
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock 
+                Grid.Row="0"
+                Grid.Column="0"
+                Grid.ColumnSpan="2"
             >
-            <DataGrid.Columns>
-                <DataGridTextColumn Header="Synced?" Binding="{Binding IsSynchronized}"/>
-                <DataGridTextColumn Header="Subject" Width="300" Binding="{Binding Subject}"/>
-                <DataGridTextColumn Header="Location" Binding="{Binding Location}"/>
-                <DataGridTextColumn Header="Start" Binding="{Binding Start}"/>
-                <DataGridTextColumn Header="End" Binding="{Binding End}"/>
-                <DataGridTextColumn Header="Recurring?" Binding="{Binding IsRecurring}"/>
-                <DataGridTextColumn Header="Recurrence" Binding="{Binding Recurrence}"/>
-                <DataGridTextColumn Header="Reminder [min]" Binding="{Binding Reminder}"/>
-            </DataGrid.Columns>           
-        </DataGrid>
-        <TextBlock
-            Grid.Row="2"
-            Margin="12"
-            TextWrapping="Wrap"
-            Text="If you see duplicates, delete the ones which are not synced."
-            />
-        <StackPanel
-            Grid.Row="2"
-            Margin="12"
-            HorizontalAlignment="Right"
-            Orientation="Horizontal"
-            >
-            <Button
-                Width="120"
+                <Run Text="You have "/>
+                <Run Text="{Binding Events.Count, Mode=OneWay}"/>
+                <Run Text=" Events in your remote calendar. Synced means they are controlled by Lumis Calendar Sync."/>
+            </TextBlock>
+            <DataGrid
+                Grid.Row="1"
+                Grid.Column="0"
+                Grid.ColumnSpan="2"
+                AutoGenerateColumns="False"
+                RowHeaderWidth="0"
+                IsReadOnly="True"
+                ItemsSource="{Binding Events}"
+                SelectedValue="{Binding SelectedEvent, Mode=TwoWay}"
+                >
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Synced?" Binding="{Binding IsSynchronized}"/>
+                    <DataGridTextColumn Header="Subject" Width="300" Binding="{Binding Subject}"/>
+                    <DataGridTextColumn Header="Location" Binding="{Binding Location}"/>
+                    <DataGridTextColumn Header="Start" Binding="{Binding Start}"/>
+                    <DataGridTextColumn Header="End" Binding="{Binding End}"/>
+                    <DataGridTextColumn Header="Recurring?" Binding="{Binding IsRecurring}"/>
+                    <DataGridTextColumn Header="Recurrence" Binding="{Binding Recurrence}"/>
+                    <DataGridTextColumn Header="Reminder [min]" Binding="{Binding Reminder}"/>
+                </DataGrid.Columns>           
+            </DataGrid>
+            <TextBlock
+                Grid.Row="2"
+                Grid.Column="0"
+                HorizontalAlignment="Stretch"
                 VerticalAlignment="Center"
-                Command="{Binding DeleteEventCommand}"
-                Content="Delete Event"
-                />
-            <Button
-                Width="120"
-                Content="Delete All Events"
-                Margin="12,0,0,0"
-                Command="{Binding DeleteAllCommand}"
-                />
-        </StackPanel>
+                TextWrapping="Wrap"
+                >
+                <Run Text="You can delete events from your remote calendar, your local calendar is not affected."/>
+                <LineBreak/>
+                <Run Text="If you delete a synced event, Lumis Calendar Sync will creaate it again during the next sync."/>
+                </TextBlock>
+            <StackPanel
+                Grid.Row="2"
+                Grid.Column="1"
+                HorizontalAlignment="Right"
+                Orientation="Horizontal"
+                >
+                <Button
+                    Width="120"
+                    VerticalAlignment="Center"
+                    Margin="12"
+                    Command="{Binding DeleteEventCommand}"
+                    Content="Delete Event"
+                    />
+                <Button
+                    Width="120"
+                    VerticalAlignment="Center"
+                    Margin="12"
+                    Content="Delete All Events"
+                    Command="{Binding DeleteAllCommand}"
+                    />
+            </StackPanel>
+        </Grid>
         <Expander
-            Grid.Row="3"
+            Grid.Row="2"
             ExpandDirection="Up"
+            Name="Expander"
             >
             <Expander.Header>
                 <StackPanel
@@ -144,12 +174,13 @@
             </Expander.Header>
             <ListBox
                 x:Name="LogListBox"
-                Height="100"
+                Margin="12,0"
+                MinHeight="100"
                 ItemsSource="{Binding LogEntries}"
                 />
         </Expander>
         <StatusBar
-            Grid.Row="4">
+            Grid.Row="3">
             <StatusBarItem>
                 <TextBlock Text="{Binding Error}" Foreground="Red"/>
             </StatusBarItem>

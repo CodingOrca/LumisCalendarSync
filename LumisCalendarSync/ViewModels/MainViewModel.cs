@@ -48,7 +48,7 @@ namespace LumisCalendarSync.ViewModels
             
             myTimer = new DispatcherTimer();
             myTimer.Tick += Timer_Tick;
-            myTimer.Interval = TimeSpan.FromMinutes(Properties.Settings.Default.AutoSyncInterval);
+            myTimer.Interval = TimeSpan.FromMinutes(Settings.Default.AutoSyncInterval);
 
             if (InDesignMode())
             {
@@ -119,7 +119,7 @@ namespace LumisCalendarSync.ViewModels
 
         private void SaveMappingTable()
         {
-            var mappingFile = Path.Combine(myAppDataFolder, String.Format("{0}-{1}.mapping", this.User.EmailAddress, SelectedCalendar.Name));
+            var mappingFile = Path.Combine(myAppDataFolder, String.Format("{0}-{1}.mapping", User.EmailAddress, SelectedCalendar.Name));
             try
             {
                 var serializer = new JavaScriptSerializer();
@@ -137,7 +137,7 @@ namespace LumisCalendarSync.ViewModels
             // (different between debug and release, can be changed from .net version)
             // So we move it to a mre reliable filename:
             var legacyMappingFile = Path.Combine(myAppDataFolder, String.Format("Mapping-{0}.dat", SelectedCalendar.Id.GetHashCode()));
-            var mappingFile = Path.Combine(myAppDataFolder, String.Format("{0}-{1}.mapping", this.User.EmailAddress, SelectedCalendar.Name));
+            var mappingFile = Path.Combine(myAppDataFolder, String.Format("{0}-{1}.mapping", User.EmailAddress, SelectedCalendar.Name));
 
             if (File.Exists(legacyMappingFile))
             {
@@ -189,8 +189,8 @@ namespace LumisCalendarSync.ViewModels
                 Set(ref mySelectedCalendar, value, "SelectedCalendar");
                 if (SelectedCalendar != null)
                 {
-                    Properties.Settings.Default.RemoteCaleandarId = SelectedCalendar.Id;
-                    Properties.Settings.Default.Save();
+                    Settings.Default.RemoteCaleandarId = SelectedCalendar.Id;
+                    Settings.Default.Save();
                     LoadMappingTable();
                     PopulateEventsAsync(SelectedCalendar.Id);
                 }
@@ -213,11 +213,11 @@ namespace LumisCalendarSync.ViewModels
 
         public bool IsAutoSyncEnabled
         {
-            get { return Properties.Settings.Default.IsAutoSyncEnabled; }
+            get { return Settings.Default.IsAutoSyncEnabled; }
             set
             {
-                Properties.Settings.Default.IsAutoSyncEnabled = value;
-                Properties.Settings.Default.Save();
+                Settings.Default.IsAutoSyncEnabled = value;
+                Settings.Default.Save();
                 RaisePropertyChanged("IsAutoSyncEnabled");
                 RaisePropertyChanged("CanChangeCalendar");
                 myTimer.IsEnabled = value;
@@ -226,12 +226,12 @@ namespace LumisCalendarSync.ViewModels
 
         public int AutoSyncInterval
         {
-            get { return Properties.Settings.Default.AutoSyncInterval; }
+            get { return Settings.Default.AutoSyncInterval; }
             set
             {
                 if(value < 10 ) throw new Exception("Provide a value in minutes > 10");
-                Properties.Settings.Default.AutoSyncInterval = value;
-                Properties.Settings.Default.Save();
+                Settings.Default.AutoSyncInterval = value;
+                Settings.Default.Save();
                 myTimer.Interval = TimeSpan.FromMinutes(value);
                 RaisePropertyChanged("AutoSyncInterval");
             }
@@ -373,7 +373,7 @@ namespace LumisCalendarSync.ViewModels
                 Error = "User not logged in, cannot sync";
                 return;
             }
-            if (String.IsNullOrEmpty(Properties.Settings.Default.RemoteCaleandarId))
+            if (String.IsNullOrEmpty(Settings.Default.RemoteCaleandarId))
             {
                 Error = "No remote calendar selected";
                 return;
@@ -401,13 +401,13 @@ namespace LumisCalendarSync.ViewModels
                         return;
                     }
 
-                    var remoteCalendarEvents = myOutlookServicesClient.Me.Calendars[Properties.Settings.Default.RemoteCaleandarId].Events;
+                    var remoteCalendarEvents = myOutlookServicesClient.Me.Calendars[Settings.Default.RemoteCaleandarId].Events;
                     
                     Events.Clear();
                     LogEntries.Clear();
                     WriteMessageLog("Starting syncing your local appointments to remote calendar [{0}] on account [{1}].", SelectedCalendar.Name, User.EmailAddress);
 
-                    var dstAppointmentItems = await GetCalendarEventsAsync(Properties.Settings.Default.RemoteCaleandarId);
+                    var dstAppointmentItems = await GetCalendarEventsAsync(Settings.Default.RemoteCaleandarId);
 
                     var targetItems = GetAllSyncedEvents(dstAppointmentItems);
 
@@ -852,7 +852,7 @@ namespace LumisCalendarSync.ViewModels
                     break;
                 case OlRecurrenceType.olRecursMonthNth:
                     if (dstRecurrence.Pattern.Index != srcRecurrence.Pattern.Index) return "MonthNth Index changed";
-                    if (dstRecurrence.Pattern.DaysOfWeek != srcRecurrence.Pattern.DaysOfWeek) return "MonthlyNth DaysOfWeek changed";
+                    if (!dstRecurrence.Pattern.DaysOfWeek.SequenceEqual(srcRecurrence.Pattern.DaysOfWeek)) return "MonthlyNth DaysOfWeek changed";
                     break;
                 case OlRecurrenceType.olRecursYearly:
                     if (dstRecurrence.Pattern.DayOfMonth != srcRecurrence.Pattern.DayOfMonth) return "Yearly DayOfMonth changed";
@@ -1165,7 +1165,7 @@ namespace LumisCalendarSync.ViewModels
         {
             if (!myMappingTable.ContainsKey(srcAppointmentId) || myMappingTable[srcAppointmentId].ExceptionIds == null)
             {
-                throw new ArgumentException("The source appointment must be a recurring, synced appointment", "srcAppointmentId");
+                throw new ArgumentException(@"The source appointment must be a recurring, synced appointment", "srcAppointmentId");
             }
 
             if (!myMappingTable[srcAppointmentId].ExceptionIds.ContainsKey(originalDate))
@@ -1232,7 +1232,7 @@ namespace LumisCalendarSync.ViewModels
 
         async private void AutologinAsync()
         {
-            if (String.IsNullOrEmpty(Properties.Settings.Default.refresh_token))
+            if (String.IsNullOrEmpty(Settings.Default.refresh_token))
             {
                 Error = "You are not logged in";
                 return;
@@ -1249,8 +1249,8 @@ namespace LumisCalendarSync.ViewModels
             {
                 if (!IsLoggedIn)
                 {
-                    Properties.Settings.Default.refresh_token = null;
-                    Properties.Settings.Default.Save();
+                    Settings.Default.refresh_token = null;
+                    Settings.Default.Save();
                 }
                 WriteMessageLog("Could not log you in: {0}", ex);
                 LogApiMigrationError();
@@ -1282,8 +1282,8 @@ namespace LumisCalendarSync.ViewModels
             {
                 if (!IsLoggedIn)
                 {
-                    Properties.Settings.Default.refresh_token = null;
-                    Properties.Settings.Default.Save();                        
+                    Settings.Default.refresh_token = null;
+                    Settings.Default.Save();                        
                 }
                 WriteMessageLog("Could not log you in: {0}", ex);
                 Error = "Login Failed";
@@ -1326,8 +1326,8 @@ namespace LumisCalendarSync.ViewModels
             finally
             {
                 RunningAsyncOperations--;
-                Properties.Settings.Default.refresh_token = null;
-                Properties.Settings.Default.Save();
+                Settings.Default.refresh_token = null;
+                Settings.Default.Save();
                 IsLoggedIn = false;
                 User = null;
                 Cleanup();
@@ -1347,7 +1347,7 @@ namespace LumisCalendarSync.ViewModels
                 foreach (var cal in cals.CurrentPage)
                 {
                     Calendars.Add(cal);
-                    if (cal.Id == Properties.Settings.Default.RemoteCaleandarId)
+                    if (cal.Id == Settings.Default.RemoteCaleandarId)
                     {
                         SelectedCalendar = cal;
                     }
@@ -1427,8 +1427,8 @@ namespace LumisCalendarSync.ViewModels
                 startUpFolderPath + "\\" +
                 "LumisCalendarSync" + ".lnk");
 
-            shortcut.TargetPath = System.Reflection.Assembly.GetExecutingAssembly().Location;
-            shortcut.WorkingDirectory = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+            shortcut.TargetPath = Assembly.GetExecutingAssembly().Location;
+            shortcut.WorkingDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             // shortcut.Arguments = "/Minimized";
             shortcut.WindowStyle = 7;
             shortcut.Description = "Lumis Calendar Sync Autostart";

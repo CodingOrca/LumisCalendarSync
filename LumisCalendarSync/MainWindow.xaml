@@ -176,6 +176,7 @@
                 x:Name="LogListBox"
                 Margin="12,0"
                 MinHeight="100"
+                MaxHeight="300"
                 ItemsSource="{Binding LogEntries}"
                 />
         </Expander>

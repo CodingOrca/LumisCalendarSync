@@ -129,7 +129,7 @@
                 >
                 <Run Text="You can delete events from your remote calendar, your local calendar is not affected."/>
                 <LineBreak/>
-                <Run Text="If you delete a synced event, Lumis Calendar Sync will creaate it again during the next sync."/>
+                <Run Text="If you delete a synced event, Lumis Calendar Sync will create and sync it again during the next sync."/>
                 </TextBlock>
             <StackPanel
                 Grid.Row="2"

@@ -31,7 +31,7 @@ namespace LumisCalendarSync.ViewModels
         // at the first sync with the new app version. 
         // Best Practice: if we change some code (fix or new feature) which needs a full sync, set this to the same value as in the MSI.
         // But not needing to set it vor every new MSI version: if no sync must be forced, don't change it.
-        private const string CurrentAppVersion = "2.0.12.0";
+        private const string CurrentAppVersion = "2.1.0.0";
 
         public MainViewModel()
         {

@@ -118,5 +118,17 @@ namespace LumisCalendarSync.Properties {
                 this["ForceNextSync"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool SkipOldAppointments {
+            get {
+                return ((bool)(this["SkipOldAppointments"]));
+            }
+            set {
+                this["SkipOldAppointments"] = value;
+            }
+        }
     }
 }

@@ -76,6 +76,12 @@
                 VerticalAlignment="Center"
                 IsChecked ="{Binding RunAtStartup, Mode=TwoWay}" 
                 Content="Start when I log in"/>
+            <CheckBox 
+                Margin="24,0,0,0"
+                VerticalAlignment="Center"
+                ToolTip="Do not sync Appointments older than 1 Month"
+                IsChecked ="{Binding SkipOldAppointments, Mode=TwoWay}" 
+                Content="Skip old appointments"/>
 
         </StackPanel>
         <Grid
@@ -94,10 +100,8 @@
                 Grid.Row="0"
                 Grid.Column="0"
                 Grid.ColumnSpan="2"
+                Text="{Binding Events.Count, Mode=OneWay, StringFormat='You have {0} Appointments in your remote calendar. Synced means they are controlled by Lumis Calendar Sync.'}"
             >
-                <Run Text="You have "/>
-                <Run Text="{Binding Events.Count, Mode=OneWay}"/>
-                <Run Text=" Events in your remote calendar. Synced means they are controlled by Lumis Calendar Sync."/>
             </TextBlock>
             <DataGrid
                 Grid.Row="1"
@@ -127,9 +131,9 @@
                 VerticalAlignment="Center"
                 TextWrapping="Wrap"
                 >
-                <Run Text="You can delete events from your remote calendar, your local calendar is not affected."/>
+                <Run Text="You can delete Appointments from your remote calendar, your local calendar is not affected."/>
                 <LineBreak/>
-                <Run Text="If you delete a synced event, Lumis Calendar Sync will create and sync it again during the next sync."/>
+                <Run Text="If you delete a synced Appointment, Lumis Calendar Sync will create and sync it again during the next sync."/>
                 </TextBlock>
             <StackPanel
                 Grid.Row="2"
@@ -138,17 +142,17 @@
                 Orientation="Horizontal"
                 >
                 <Button
-                    Width="120"
+                    Width="160"
                     VerticalAlignment="Center"
                     Margin="12"
                     Command="{Binding DeleteEventCommand}"
-                    Content="Delete Event"
+                    Content="Delete Appointment"
                     />
                 <Button
-                    Width="120"
+                    Width="160"
                     VerticalAlignment="Center"
                     Margin="12"
-                    Content="Delete All Events"
+                    Content="Delete All Appointments"
                     Command="{Binding DeleteAllCommand}"
                     />
             </StackPanel>
@@ -182,8 +186,11 @@
         </Expander>
         <StatusBar
             Grid.Row="3">
-            <StatusBarItem>
+            <StatusBarItem HorizontalAlignment="Left">
                 <TextBlock Text="{Binding Error}" Foreground="Red"/>
+            </StatusBarItem>
+            <StatusBarItem HorizontalAlignment="Right">
+                <TextBlock Width="120" Text="{Binding CurrentAppVersion, StringFormat='App Version: {0}'}"/>
             </StatusBarItem>
         </StatusBar>
     </Grid>

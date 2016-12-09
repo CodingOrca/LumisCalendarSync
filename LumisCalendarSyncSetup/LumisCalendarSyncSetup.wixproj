@@ -6,10 +6,14 @@
     <ProductVersion>3.10</ProductVersion>
     <ProjectGuid>71d0e3dc-d9e4-44bc-94b9-58c5d08b4518</ProjectGuid>
     <SchemaVersion>2.0</SchemaVersion>
-    <OutputName>LumisCalendarSyncSetup</OutputName>
+    <OutputName>LumisCalendarSync-2.2.0.0-Setup</OutputName>
     <OutputType>Package</OutputType>
     <WixTargetsPath Condition=" '$(WixTargetsPath)' == '' AND '$(MSBuildExtensionsPath32)' != '' ">$(MSBuildExtensionsPath32)\Microsoft\WiX\v3.x\Wix.targets</WixTargetsPath>
     <WixTargetsPath Condition=" '$(WixTargetsPath)' == '' ">$(MSBuildExtensionsPath)\Microsoft\WiX\v3.x\Wix.targets</WixTargetsPath>
+    <SccProjectName>$/lumiscalendarsync/LumisCalendarSyncSetup</SccProjectName>
+    <SccProvider>{4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}</SccProvider>
+    <SccAuxPath>https://tfs.codeplex.com/tfs/tfs12</SccAuxPath>
+    <SccLocalPath>.</SccLocalPath>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
     <OutputPath>bin\$(Configuration)\</OutputPath>

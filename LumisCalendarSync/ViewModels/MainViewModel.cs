@@ -27,11 +27,22 @@ namespace LumisCalendarSync.ViewModels
 {
     public class MainViewModel: BindableBase
     {
-        // When we change the list of synced attributes, we change this CurrentAppVersion to force a sync of all appointments 
+        // This version is shown to the user in the UI and shall be the same as the version set in the MSI.
+        // We change this whenever we publish a new msi version.
+        public string CurrentAppVersion
+        {
+            get { return "2.2.0.0"; }
+        }
+        
+        // When we change the list of synced attributes, we change CurrentDataVersion to force a sync of all appointments 
         // at the first sync with the new app version. 
         // Best Practice: if we change some code (fix or new feature) which needs a full sync, set this to the same value as in the MSI.
         // But not needing to set it vor every new MSI version: if no sync must be forced, don't change it.
-        private const string CurrentAppVersion = "2.1.0.0";
+        public string CurrentDataVersion
+        {
+            get { return "2.2.0.0"; }
+        }
+
 
         public MainViewModel()
         {
@@ -40,9 +51,9 @@ namespace LumisCalendarSync.ViewModels
             Events = new ObservableCollection<EventModel>();
             LogEntries = new ObservableCollection<string>();
 
-            if (CurrentAppVersion != Settings.Default.AppVersion)
+            if (CurrentDataVersion != Settings.Default.AppVersion)
             {
-                Settings.Default.AppVersion = CurrentAppVersion;
+                Settings.Default.AppVersion = CurrentDataVersion;
                 Settings.Default.ForceNextSync = true;
                 Settings.Default.Save();
             }
@@ -85,10 +96,11 @@ namespace LumisCalendarSync.ViewModels
 
         private void WriteMessageLog(string format, params object[] arguments)
         {
-            // re-open the file if it exceeds 10 MB
-            if (myMessageLog != null && myMessageLog.BaseStream.Length > 10 * 1024 * 1024)
+            // delete the file if it exceeds 100 KB
+            if (myMessageLog != null && myMessageLog.BaseStream.Length > 100 * 1024)
             {
                 myMessageLog.Close();
+                File.Delete(LogFileName);
                 myMessageLog = null;
             }
             if (myMessageLog == null)
@@ -360,6 +372,17 @@ namespace LumisCalendarSync.ViewModels
             }
         }
 
+        public bool SkipOldAppointments
+        {
+            get { return Settings.Default.SkipOldAppointments; }
+            set
+            {
+                Settings.Default.SkipOldAppointments = value;
+                Settings.Default.Save();
+                RaisePropertyChanged("SkipOldAppointments");
+            }
+        }
+
         async void Timer_Tick(object sender, EventArgs e)
         {
             await SynchronizeAsync();
@@ -381,6 +404,7 @@ namespace LumisCalendarSync.ViewModels
             }
 
             int unchangedAppointments = 0;
+            int skippedAppointments = 0;
             int successfullyUpdated = 0;
             int errorUpdated = 0;
             int deletedUpdates = 0;
@@ -437,6 +461,15 @@ namespace LumisCalendarSync.ViewModels
 
                         try
                         {
+                            operationChain = "";
+
+                            if (SkipOldAppointments && IsAppointmentOld(srcAppointment))
+                            {
+                                WriteMessageLog("Skipping [{0}] as it ends more than 30 days ago.", srcAppointment.Subject);
+                                skippedAppointments++;
+                                continue;
+                            }
+
                             currentSubject = srcAppointment.Subject;
                             IEvent dstAppointment = null;
                             operationChain += "Checking if target appointment alreay exists; ";
@@ -519,11 +552,17 @@ namespace LumisCalendarSync.ViewModels
 
                                     operationChain += "Not Recurring; ";
 
-                                    operationChain += "Updating Start; ";
-                                    dstAppointment.Start = CreateDateTimeTimeZone(srcAppointment.Start);
-
-                                    operationChain += "Updating Duration; ";
-                                    dstAppointment.End = CreateDateTimeTimeZone(srcAppointment.Start + TimeSpan.FromMinutes(srcAppointment.Duration));
+                                    operationChain += "Updating Start and End; ";
+                                    if (srcAppointment.AllDayEvent)
+                                    {
+                                        dstAppointment.Start = CreateDateTimeTimeZone(srcAppointment.Start.Date);
+                                        dstAppointment.End = CreateDateTimeTimeZone(srcAppointment.End.Date);
+                                    }
+                                    else
+                                    {
+                                        dstAppointment.Start = CreateDateTimeTimeZone(srcAppointment.Start);
+                                        dstAppointment.End = CreateDateTimeTimeZone(srcAppointment.End);
+                                    }
 
                                     operationChain += "Saving; ";
                                     if (dstAppointmentIsNew)
@@ -586,7 +625,19 @@ namespace LumisCalendarSync.ViewModels
                                         foreach (Microsoft.Office.Interop.Outlook.Exception srcException in srcExceptions)
                                         {
                                             var srcExceptionItem = srcException.Deleted ? null : srcException.AppointmentItem;
-
+                                            if (SkipOldAppointments)
+                                            {
+                                                if (srcException.Deleted && (DateTime.Now.Date - srcException.OriginalDate.Date).TotalDays > 30)
+                                                {
+                                                    numberOfUnchangedExceptions++;
+                                                    continue;
+                                                }
+                                                if (srcExceptionItem != null && (DateTime.Now.Date - srcExceptionItem.End.Date).TotalDays > 30)
+                                                {
+                                                    numberOfUnchangedExceptions++;
+                                                    continue;
+                                                }
+                                            }
                                             try
                                             {
                                                 IEvent dstExceptionItem = null;
@@ -659,7 +710,7 @@ namespace LumisCalendarSync.ViewModels
                                         }
                                         if (srcExceptions.Count > 0)
                                         {
-                                            WriteMessageLog("    {0} Exceptions found, {1} needs no update.", srcExceptions.Count, numberOfUnchangedExceptions);
+                                            WriteMessageLog("    {0} Exceptions found, {1} needs no update or are too old.", srcExceptions.Count, numberOfUnchangedExceptions);
                                         }
                                         else
                                         {
@@ -716,6 +767,7 @@ namespace LumisCalendarSync.ViewModels
                     if (deletedUpdates != 0) WriteMessageLog("{0} appointments deleted.", deletedUpdates);
                     if (errorUpdated != 0) WriteMessageLog("{0} appointments failed to be updated.", errorUpdated);
                     if (unchangedAppointments != 0) WriteMessageLog("{0} appointments did not changed since their last sync.", unchangedAppointments);
+                    if(skippedAppointments != 0) WriteMessageLog("{0} appointments not synced or deleted because they are older than 30 days.", skippedAppointments);
                     WriteMessageLog("");
 
                     Settings.Default.ForceNextSync = false;
@@ -740,6 +792,23 @@ namespace LumisCalendarSync.ViewModels
                     myTimer.Start();
                 }
             }
+        }
+
+        private static bool IsAppointmentOld(AppointmentItem srcAppointment)
+        {
+            bool isToBeSkipped = false;
+            if (srcAppointment.IsRecurring)
+            {
+                var pattern = srcAppointment.GetRecurrencePattern();
+                isToBeSkipped = !pattern.NoEndDate &&
+                                (DateTime.Now.Date - pattern.PatternEndDate).TotalDays > 30;
+                Marshal.ReleaseComObject(pattern);
+            }
+            else
+            {
+                isToBeSkipped = (DateTime.Now.Date - srcAppointment.End.Date).TotalDays > 30;
+            }
+            return isToBeSkipped;
         }
 
 
@@ -940,7 +1009,7 @@ namespace LumisCalendarSync.ViewModels
             var deletedItems = 0;
             foreach (var item in targetItems)
             {
-                WriteMessageLog("  Deleting [{0}].", item.Value.Subject);
+                WriteMessageLog("Deleting remote Appointment [{0}].", item.Value.Subject);
                 try
                 {
                     myMappingTable.Remove(item.Key);
@@ -949,7 +1018,7 @@ namespace LumisCalendarSync.ViewModels
                 }
                 catch (Exception ex)
                 {
-                    WriteMessageLog("  ERROR: Could not delete appointment [{0}]: {1}", item.Value.Subject, ex.Message);
+                    WriteMessageLog("  ERROR: Could not delete remote appointment [{0}]: {1}", item.Value.Subject, ex.Message);
                 }                
             }
             return deletedItems;

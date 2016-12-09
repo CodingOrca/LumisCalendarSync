@@ -625,21 +625,22 @@ namespace LumisCalendarSync.ViewModels
                                         foreach (Microsoft.Office.Interop.Outlook.Exception srcException in srcExceptions)
                                         {
                                             var srcExceptionItem = srcException.Deleted ? null : srcException.AppointmentItem;
-                                            if (SkipOldAppointments)
-                                            {
-                                                if (srcException.Deleted && (DateTime.Now.Date - srcException.OriginalDate.Date).TotalDays > 30)
-                                                {
-                                                    numberOfUnchangedExceptions++;
-                                                    continue;
-                                                }
-                                                if (srcExceptionItem != null && (DateTime.Now.Date - srcExceptionItem.End.Date).TotalDays > 30)
-                                                {
-                                                    numberOfUnchangedExceptions++;
-                                                    continue;
-                                                }
-                                            }
                                             try
                                             {
+                                                if (SkipOldAppointments)
+                                                {
+                                                    if (srcException.Deleted && (DateTime.Now.Date - srcException.OriginalDate.Date).TotalDays > 30)
+                                                    {
+                                                        numberOfUnchangedExceptions++;
+                                                        continue;
+                                                    }
+                                                    if (srcExceptionItem != null && (DateTime.Now.Date - srcExceptionItem.End.Date).TotalDays > 30)
+                                                    {
+                                                        numberOfUnchangedExceptions++;
+                                                        continue;
+                                                    }
+                                                }
+
                                                 IEvent dstExceptionItem = null;
                                                 var originalDate = srcException.OriginalDate.ToString("O").Substring(0, 10);
                                                 if (myMappingTable[srcAppointment.GlobalAppointmentID].ExceptionIds.ContainsKey(originalDate))

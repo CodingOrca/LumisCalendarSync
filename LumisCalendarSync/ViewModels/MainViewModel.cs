@@ -31,7 +31,7 @@ namespace LumisCalendarSync.ViewModels
         // We change this whenever we publish a new msi version.
         public string CurrentAppVersion
         {
-            get { return "2.2.0.0"; }
+            get { return "2.3.0.0"; }
         }
         
         // When we change the list of synced attributes, we change CurrentDataVersion to force a sync of all appointments 
@@ -94,6 +94,20 @@ namespace LumisCalendarSync.ViewModels
 
         public ObservableCollection<string> LogEntries { get; private set; }
 
+        private void LogMessage(string format, params object[] arguments)
+        {
+            var time = DateTime.Now.ToString("s");
+            if (String.IsNullOrWhiteSpace(format))
+            {
+                LogEntries.Add(String.Format(""));
+            }
+            else
+            {
+                LogEntries.Add(String.Format("{0}: {1}", time, String.Format(format, arguments)));
+            }
+            WriteMessageLog(format, arguments);
+        }
+
         private void WriteMessageLog(string format, params object[] arguments)
         {
             // delete the file if it exceeds 100 KB
@@ -107,7 +121,7 @@ namespace LumisCalendarSync.ViewModels
             {
                 try
                 {
-                    myMessageLog = new StreamWriter(LogFileName, append:true) { AutoFlush = true };
+                    myMessageLog = new StreamWriter(LogFileName, append: true) { AutoFlush = true };
                 }
                 catch (Exception ex)
                 {
@@ -120,12 +134,10 @@ namespace LumisCalendarSync.ViewModels
             string time = DateTime.Now.ToString("s");
             if (String.IsNullOrWhiteSpace(format))
             {
-                LogEntries.Add(String.Format(""));
                 myMessageLog.WriteLine();
             }
             else
             {
-                LogEntries.Add(String.Format("{0}: {1}", time, String.Format(format, arguments)));
                 myMessageLog.WriteLine("{0}: {1}", time, String.Format(format, arguments));
             }
         }
@@ -140,7 +152,7 @@ namespace LumisCalendarSync.ViewModels
             }
             catch (Exception ex)
             {
-                WriteMessageLog("Could not save Mapping file {0}: {1}", mappingFile, ex);
+                LogMessage("Could not save Mapping file {0}: {1}", mappingFile, ex);
             }
         }
 
@@ -169,7 +181,7 @@ namespace LumisCalendarSync.ViewModels
             }
             catch (Exception ex)
             {
-                WriteMessageLog("Could not load Mapping file {0}: {1}", mappingFile, ex);
+                LogMessage("Could not load Mapping file {0}: {1}", mappingFile, ex);
             }
         }
 
@@ -421,7 +433,7 @@ namespace LumisCalendarSync.ViewModels
                     srcAppointmentItems = outlookWrapper.GetAppointmentItems();
                     if (srcAppointmentItems == null)
                     {
-                        WriteMessageLog("Outlook is not running, cannot sync.");
+                        LogMessage("Outlook is not running, cannot sync.");
                         Error = "Outlook is not running, cannot sync.";
                         return;
                     }
@@ -430,7 +442,7 @@ namespace LumisCalendarSync.ViewModels
                     
                     Events.Clear();
                     LogEntries.Clear();
-                    WriteMessageLog("Starting syncing your local appointments to remote calendar [{0}] on account [{1}].", SelectedCalendar.Name, User.EmailAddress);
+                    LogMessage("Starting syncing your local appointments to remote calendar [{0}] on account [{1}].", SelectedCalendar.Name, User.EmailAddress);
 
                     var dstAppointmentItems = await GetCalendarEventsAsync(Settings.Default.RemoteCaleandarId);
 
@@ -474,6 +486,11 @@ namespace LumisCalendarSync.ViewModels
                             IEvent dstAppointment = null;
                             operationChain += "Checking if target appointment alreay exists; ";
                             string reasonForSync = "New Appointment";
+                            if (String.IsNullOrEmpty(srcAppointment.GlobalAppointmentID))
+                            {
+                                LogMessage("Appointment {0} has no Global Appointment ID, ignoring it.", currentSubject);
+                                continue;
+                            }
                             if (targetItems.ContainsKey(srcAppointment.GlobalAppointmentID))
                             {
                                 dstAppointment = targetItems[srcAppointment.GlobalAppointmentID];
@@ -515,7 +532,7 @@ namespace LumisCalendarSync.ViewModels
                             bool dstAppointmentIsNew = (dstAppointment == null);
                             try
                             {
-                                WriteMessageLog("  Syncing [{0}]: {1}.", srcAppointment.Subject, reasonForSync);
+                                LogMessage("  Syncing [{0}]: {1}.", srcAppointment.Subject, reasonForSync);
 
                                 if (dstAppointment == null)
                                 {
@@ -548,7 +565,7 @@ namespace LumisCalendarSync.ViewModels
                                 // Non-recurring appointment:
                                 if (!srcAppointment.IsRecurring)
                                 {
-                                    WriteMessageLog("  on {0}.", srcAppointment.Start);
+                                    LogMessage("  on {0}.", srcAppointment.Start);
 
                                     operationChain += "Not Recurring; ";
 
@@ -598,7 +615,7 @@ namespace LumisCalendarSync.ViewModels
                                         dstAppointment.Start = CreateDateTimeTimeZone(srcPattern.StartTime);
                                         operationChain += "Updating Duration; ";
                                         dstAppointment.End = CreateDateTimeTimeZone(srcPattern.EndTime);
-                                        WriteMessageLog("  recurring {0} at {1}.", dstRecurrence.Pattern.Type, dstAppointment.Start.DateTime.Substring(11, 8));
+                                        LogMessage("  recurring {0} at {1}.", dstRecurrence.Pattern.Type, dstAppointment.Start.DateTime.Substring(11, 8));
 
                                         UpdateDestinationPattern(srcPattern, dstRecurrence);
 
@@ -609,7 +626,7 @@ namespace LumisCalendarSync.ViewModels
                                     }
                                     else
                                     {
-                                        WriteMessageLog("  No change for the series master, no update needed.");
+                                        LogMessage("  No change for the series master, no update needed.");
                                     }
                                     Events.Add(new EventModel(dstAppointment) { IsSynchronized = true });
 
@@ -619,7 +636,7 @@ namespace LumisCalendarSync.ViewModels
                                     {
                                         if (srcExceptions.Count > 0)
                                         {
-                                            WriteMessageLog("    Syncing exceptions for this series:");
+                                            LogMessage("    Syncing exceptions for this series:");
                                         }
                                         var numberOfUnchangedExceptions = 0;
                                         foreach (Microsoft.Office.Interop.Outlook.Exception srcException in srcExceptions)
@@ -668,7 +685,7 @@ namespace LumisCalendarSync.ViewModels
                                                 }
                                                 if (dstExceptionItem == null)
                                                 {
-                                                    WriteMessageLog("      No remote instance found for local {1}exception on {0}.", originalDate,
+                                                    LogMessage("      No remote instance found for local {1}exception on {0}.", originalDate,
                                                         srcException.Deleted ? "deleted " : "");
                                                     continue;
                                                 }
@@ -678,7 +695,7 @@ namespace LumisCalendarSync.ViewModels
                                                 if (srcException.Deleted)
                                                 {
                                                     await dstExceptionItem.DeleteAsync();
-                                                    WriteMessageLog("      On {0}: cancelled.", originalDate);
+                                                    LogMessage("      On {0}: cancelled.", originalDate);
                                                 }
                                                 else
                                                 {
@@ -694,7 +711,7 @@ namespace LumisCalendarSync.ViewModels
                                                         dstExceptionItem.ReminderMinutesBeforeStart = srcExceptionItem.ReminderMinutesBeforeStart;
                                                     }
                                                     await dstExceptionItem.UpdateAsync();
-                                                    WriteMessageLog("      On {0}: updated, start at {1}.", originalDate, srcExceptionItem.Start.ToString("g", CultureInfo.CurrentCulture));
+                                                    LogMessage("      On {0}: updated, start at {1}.", originalDate, srcExceptionItem.Start.ToString("g", CultureInfo.CurrentCulture));
 
                                                     UpdateExceptionInMappingTable(srcAppointment.GlobalAppointmentID, originalDate, dstExceptionItem.Id);
                                                 }
@@ -711,11 +728,11 @@ namespace LumisCalendarSync.ViewModels
                                         }
                                         if (srcExceptions.Count > 0)
                                         {
-                                            WriteMessageLog("    {0} Exceptions found, {1} needs no update or are too old.", srcExceptions.Count, numberOfUnchangedExceptions);
+                                            LogMessage("    {0} Exceptions found, {1} needs no update or are too old.", srcExceptions.Count, numberOfUnchangedExceptions);
                                         }
                                         else
                                         {
-                                            WriteMessageLog("    This series has no exceptions.");
+                                            LogMessage("    This series has no exceptions.");
                                         }
                                     }
                                     finally
@@ -730,26 +747,26 @@ namespace LumisCalendarSync.ViewModels
                             {
                                 if (dstAppointmentIsNew)
                                 {
-                                    WriteMessageLog("  ERROR: Could not create appointment [{0}] in target calendar.", srcAppointment.Subject);
-                                    WriteMessageLog("  Chain of performed operations: {0}.", operationChain);
-                                    WriteMessageLog("  {0}", ex.ToString());
-                                    WriteMessageLog("");
+                                    LogMessage("  ERROR: Could not create appointment [{0}] in target calendar.", srcAppointment.Subject);
+                                    LogMessage("  Chain of performed operations: {0}.", operationChain);
+                                    LogMessage("  {0}", ex.ToString());
+                                    LogMessage("");
                                 }
                                 else
                                 {
-                                    WriteMessageLog("  ERROR: Could not sync appointment [{0}].", srcAppointment.Subject);
-                                    WriteMessageLog("  {0}", ex.ToString());
-                                    WriteMessageLog("");
+                                    LogMessage("  ERROR: Could not sync appointment [{0}].", srcAppointment.Subject);
+                                    LogMessage("  {0}", ex.ToString());
+                                    LogMessage("");
                                 }
                                 errorUpdated++;
                             }
                         }
                         catch (Exception ex)
                         {
-                            WriteMessageLog("ERROR syncing [{0}]. The message below might help us understanding what happened. Sorry.", currentSubject);
-                            WriteMessageLog("Chain of performed operations: {0}.", operationChain);
-                            WriteMessageLog("{0}", ex.ToString());
-                            WriteMessageLog("");
+                            LogMessage("ERROR syncing [{0}]. The message below might help us understanding what happened. Sorry.", currentSubject);
+                            LogMessage("Chain of performed operations: {0}.", operationChain);
+                            LogMessage("{0}", ex.ToString());
+                            LogMessage("");
                         }
                         finally
                         {
@@ -763,13 +780,13 @@ namespace LumisCalendarSync.ViewModels
                     deletedUpdates += deletedItems;
                     errorUpdated += (targetItems.Count - deletedItems);
 
-                    WriteMessageLog("Sync done.");
-                    if( successfullyUpdated != 0) WriteMessageLog("{0} appointments updated / created.", successfullyUpdated);
-                    if (deletedUpdates != 0) WriteMessageLog("{0} appointments deleted.", deletedUpdates);
-                    if (errorUpdated != 0) WriteMessageLog("{0} appointments failed to be updated.", errorUpdated);
-                    if (unchangedAppointments != 0) WriteMessageLog("{0} appointments did not changed since their last sync.", unchangedAppointments);
-                    if(skippedAppointments != 0) WriteMessageLog("{0} appointments not synced or deleted because they are older than 30 days.", skippedAppointments);
-                    WriteMessageLog("");
+                    LogMessage("Sync done.");
+                    if( successfullyUpdated != 0) LogMessage("{0} appointments updated / created.", successfullyUpdated);
+                    if (deletedUpdates != 0) LogMessage("{0} appointments deleted.", deletedUpdates);
+                    if (errorUpdated != 0) LogMessage("{0} appointments failed to be updated.", errorUpdated);
+                    if (unchangedAppointments != 0) LogMessage("{0} appointments did not changed since their last sync.", unchangedAppointments);
+                    if(skippedAppointments != 0) LogMessage("{0} appointments not synced or deleted because they are older than 30 days.", skippedAppointments);
+                    LogMessage("");
 
                     Settings.Default.ForceNextSync = false;
                     Settings.Default.Save();
@@ -777,7 +794,7 @@ namespace LumisCalendarSync.ViewModels
             }
             catch (Exception ex)
             {
-                WriteMessageLog("Error during synchronization: {0}", ex);
+                LogMessage("Error during synchronization: {0}", ex);
                 Error = "Error during synchronization, see log file.";
             }
             finally
@@ -1010,7 +1027,7 @@ namespace LumisCalendarSync.ViewModels
             var deletedItems = 0;
             foreach (var item in targetItems)
             {
-                WriteMessageLog("Deleting remote Appointment [{0}].", item.Value.Subject);
+                LogMessage("Deleting remote Appointment [{0}].", item.Value.Subject);
                 try
                 {
                     myMappingTable.Remove(item.Key);
@@ -1019,7 +1036,7 @@ namespace LumisCalendarSync.ViewModels
                 }
                 catch (Exception ex)
                 {
-                    WriteMessageLog("  ERROR: Could not delete remote appointment [{0}]: {1}", item.Value.Subject, ex.Message);
+                    LogMessage("  ERROR: Could not delete remote appointment [{0}]: {1}", item.Value.Subject, ex.Message);
                 }                
             }
             return deletedItems;
@@ -1278,7 +1295,7 @@ namespace LumisCalendarSync.ViewModels
             }
             catch (Exception exception)
             {
-                WriteMessageLog("Could not delete all events: {0}", exception);
+                LogMessage("Could not delete all events: {0}", exception);
             }
             finally
             {
@@ -1323,7 +1340,7 @@ namespace LumisCalendarSync.ViewModels
                     Settings.Default.refresh_token = null;
                     Settings.Default.Save();
                 }
-                WriteMessageLog("Could not log you in: {0}", ex);
+                LogMessage("Could not log you in: {0}", ex);
                 LogApiMigrationError();
             }
             finally
@@ -1356,7 +1373,7 @@ namespace LumisCalendarSync.ViewModels
                     Settings.Default.refresh_token = null;
                     Settings.Default.Save();                        
                 }
-                WriteMessageLog("Could not log you in: {0}", ex);
+                LogMessage("Could not log you in: {0}", ex);
                 Error = "Login Failed";
             }
             finally
@@ -1367,13 +1384,13 @@ namespace LumisCalendarSync.ViewModels
 
         private void LogApiMigrationError()
         {
-            WriteMessageLog("");
-            WriteMessageLog("Lumis Calendar sync is using a new Microsoft API, and not all Microsoft accounts are enabled for this API.");
-            WriteMessageLog("The most probable cause for the error above is that your account has not yet been enabled.");
-            WriteMessageLog("It is not clear how log it will take until your account will be migrated.");
-            WriteMessageLog(
+            LogMessage("");
+            LogMessage("Lumis Calendar sync is using a new Microsoft API, and not all Microsoft accounts are enabled for this API.");
+            LogMessage("The most probable cause for the error above is that your account has not yet been enabled.");
+            LogMessage("It is not clear how log it will take until your account will be migrated.");
+            LogMessage(
                 "Currently, the only workaround is for you to create a new Microsoft account and use it, as all new accounts have the new API automatically enabled.");
-            WriteMessageLog(
+            LogMessage(
                 "Alternatively, continue to use the previous version of Lumis Calendar Sync and try this new version perdiodically until your account gets migrated.");
             Error = "We cannot access your Outlook.com Calendars. Your account might not have been migrated yet.";
         }
@@ -1392,7 +1409,7 @@ namespace LumisCalendarSync.ViewModels
             }
             catch (Exception exception)
             {
-                WriteMessageLog("Error logging you out: {0}", exception);
+                LogMessage("Error logging you out: {0}", exception);
             }
             finally
             {
@@ -1452,7 +1469,7 @@ namespace LumisCalendarSync.ViewModels
             }
             catch (Exception ex)
             {
-                WriteMessageLog("Error in retrieving the remote events: {0}", ex);
+                LogMessage("Error in retrieving the remote events: {0}", ex);
             }
             finally
             {

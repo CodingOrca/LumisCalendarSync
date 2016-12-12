@@ -6,7 +6,7 @@
     <ProductVersion>3.10</ProductVersion>
     <ProjectGuid>71d0e3dc-d9e4-44bc-94b9-58c5d08b4518</ProjectGuid>
     <SchemaVersion>2.0</SchemaVersion>
-    <OutputName>LumisCalendarSync-2.2.0.0-Setup</OutputName>
+    <OutputName>LumisCalendarSync-2.3.0.0</OutputName>
     <OutputType>Package</OutputType>
     <WixTargetsPath Condition=" '$(WixTargetsPath)' == '' AND '$(MSBuildExtensionsPath32)' != '' ">$(MSBuildExtensionsPath32)\Microsoft\WiX\v3.x\Wix.targets</WixTargetsPath>
     <WixTargetsPath Condition=" '$(WixTargetsPath)' == '' ">$(MSBuildExtensionsPath)\Microsoft\WiX\v3.x\Wix.targets</WixTargetsPath>

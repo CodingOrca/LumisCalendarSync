@@ -31,7 +31,7 @@ namespace LumisCalendarSync.ViewModels
         // We change this whenever we publish a new msi version.
         public string CurrentAppVersion
         {
-            get { return "2.3.0.0"; }
+            get { return "2.4.0.0"; }
         }
         
         // When we change the list of synced attributes, we change CurrentDataVersion to force a sync of all appointments 
@@ -40,7 +40,7 @@ namespace LumisCalendarSync.ViewModels
         // But not needing to set it vor every new MSI version: if no sync must be forced, don't change it.
         public string CurrentDataVersion
         {
-            get { return "2.2.0.0"; }
+            get { return "2.4.0.0"; }
         }
 
 
@@ -612,9 +612,9 @@ namespace LumisCalendarSync.ViewModels
                                         dstRecurrence.Pattern.Type = GetPatternType(srcPattern.RecurrenceType);
 
                                         operationChain += "Updating StartTime; ";
-                                        dstAppointment.Start = CreateDateTimeTimeZone(srcPattern.StartTime);
+                                        dstAppointment.Start = CreateDateTimeTimeZone(srcPattern.StartTime.ToLocalTime());
                                         operationChain += "Updating Duration; ";
-                                        dstAppointment.End = CreateDateTimeTimeZone(srcPattern.EndTime);
+                                        dstAppointment.End = CreateDateTimeTimeZone(srcPattern.EndTime.ToLocalTime());
                                         LogMessage("  recurring {0} at {1}.", dstRecurrence.Pattern.Type, dstAppointment.Start.DateTime.Substring(11, 8));
 
                                         UpdateDestinationPattern(srcPattern, dstRecurrence);

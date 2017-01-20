@@ -31,7 +31,7 @@ namespace LumisCalendarSync.ViewModels
         // We change this whenever we publish a new msi version.
         public string CurrentAppVersion
         {
-            get { return "2.4.0.0"; }
+            get { return "2.5.0.0"; }
         }
         
         // When we change the list of synced attributes, we change CurrentDataVersion to force a sync of all appointments 
@@ -40,7 +40,7 @@ namespace LumisCalendarSync.ViewModels
         // But not needing to set it vor every new MSI version: if no sync must be forced, don't change it.
         public string CurrentDataVersion
         {
-            get { return "2.4.0.0"; }
+            get { return "2.5.0.0"; }
         }
 
 
@@ -572,13 +572,13 @@ namespace LumisCalendarSync.ViewModels
                                     operationChain += "Updating Start and End; ";
                                     if (srcAppointment.AllDayEvent)
                                     {
-                                        dstAppointment.Start = CreateDateTimeTimeZone(srcAppointment.Start.Date);
-                                        dstAppointment.End = CreateDateTimeTimeZone(srcAppointment.End.Date);
+                                        dstAppointment.Start = CreateDateTimeTimeZone(srcAppointment.Start.Date, TimeZoneInfo.Local.Id);
+                                        dstAppointment.End = CreateDateTimeTimeZone(srcAppointment.End.Date, TimeZoneInfo.Local.Id);
                                     }
                                     else
                                     {
-                                        dstAppointment.Start = CreateDateTimeTimeZone(srcAppointment.Start);
-                                        dstAppointment.End = CreateDateTimeTimeZone(srcAppointment.End);
+                                        dstAppointment.Start = CreateDateTimeTimeZone(srcAppointment.Start, TimeZoneInfo.Local.Id);
+                                        dstAppointment.End = CreateDateTimeTimeZone(srcAppointment.End, TimeZoneInfo.Local.Id);
                                     }
 
                                     operationChain += "Saving; ";
@@ -612,9 +612,9 @@ namespace LumisCalendarSync.ViewModels
                                         dstRecurrence.Pattern.Type = GetPatternType(srcPattern.RecurrenceType);
 
                                         operationChain += "Updating StartTime; ";
-                                        dstAppointment.Start = CreateDateTimeTimeZone(srcPattern.StartTime.ToLocalTime());
+                                        dstAppointment.Start = CreateDateTimeTimeZone(srcPattern.StartTime, srcAppointment.StartTimeZone.ID);
                                         operationChain += "Updating Duration; ";
-                                        dstAppointment.End = CreateDateTimeTimeZone(srcPattern.EndTime.ToLocalTime());
+                                        dstAppointment.End = CreateDateTimeTimeZone(srcPattern.EndTime, srcAppointment.StartTimeZone.ID);
                                         LogMessage("  recurring {0} at {1}.", dstRecurrence.Pattern.Type, dstAppointment.Start.DateTime.Substring(11, 8));
 
                                         UpdateDestinationPattern(srcPattern, dstRecurrence);
@@ -703,8 +703,8 @@ namespace LumisCalendarSync.ViewModels
                                                     dstExceptionItem.Type = EventType.Exception;
                                                     dstExceptionItem.Subject = srcExceptionItem.Subject;
                                                     dstExceptionItem.Location = new Location {DisplayName = srcExceptionItem.Location};
-                                                    dstExceptionItem.Start = CreateDateTimeTimeZone(srcExceptionItem.Start);
-                                                    dstExceptionItem.End = CreateDateTimeTimeZone(srcExceptionItem.End);
+                                                    dstExceptionItem.Start = CreateDateTimeTimeZone(srcExceptionItem.Start, TimeZoneInfo.Local.Id);
+                                                    dstExceptionItem.End = CreateDateTimeTimeZone(srcExceptionItem.End, TimeZoneInfo.Local.Id);
                                                     dstExceptionItem.IsReminderOn = srcExceptionItem.ReminderSet;
                                                     if (srcExceptionItem.ReminderSet)
                                                     {
@@ -1102,12 +1102,12 @@ namespace LumisCalendarSync.ViewModels
             }
         }
 
-        private static DateTimeTimeZone CreateDateTimeTimeZone(DateTime dateTime)
+        private static DateTimeTimeZone CreateDateTimeTimeZone(DateTime dateTime, string timeZoneId)
         {
             return new DateTimeTimeZone
             {
                 DateTime = dateTime.ToString("O"),
-                TimeZone = TimeZoneInfo.Local.Id
+                TimeZone = timeZoneId
             };
         }
 

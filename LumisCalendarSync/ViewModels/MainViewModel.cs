@@ -927,8 +927,8 @@ namespace LumisCalendarSync.ViewModels
             if (srcPattern == null) return "Source Recurrence Pattern is not set";
             if (dstRecurrence == null) return "Destination recurrence pattern is not set";
             if (dstRecurrence.Pattern.Type != GetPatternType(srcPattern.RecurrenceType)) return "RecurrenceType changed";
-            if (!IsTimeIdentical(GetLocalTime(dstAppointment.Start), srcPattern.StartTime)) return "RecurringStart changed";
-            if (!IsTimeIdentical(GetLocalTime(dstAppointment.End), srcPattern.EndTime)) return "RecurringEnd changed";
+            if (!IsTimeIdentical(GetLocalTime(dstAppointment.Start), srcAppointment.Start)) return "RecurringStart changed";
+            if (!IsTimeIdentical(GetLocalTime(dstAppointment.End), srcAppointment.End)) return "RecurringEnd changed";
 
             // we create a local temp srcRecurrence to ease up the checks:
             var srcRecurrence = new PatternedRecurrence

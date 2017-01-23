@@ -31,7 +31,7 @@ namespace LumisCalendarSync.ViewModels
         // We change this whenever we publish a new msi version.
         public string CurrentAppVersion
         {
-            get { return "2.5.0.0"; }
+            get { return "2.6.0.0"; }
         }
         
         // When we change the list of synced attributes, we change CurrentDataVersion to force a sync of all appointments 
@@ -40,7 +40,7 @@ namespace LumisCalendarSync.ViewModels
         // But not needing to set it vor every new MSI version: if no sync must be forced, don't change it.
         public string CurrentDataVersion
         {
-            get { return "2.5.0.0"; }
+            get { return "2.6.0.0"; }
         }
 
 
@@ -611,10 +611,18 @@ namespace LumisCalendarSync.ViewModels
                                         operationChain += "Updating RecurreneType; ";
                                         dstRecurrence.Pattern.Type = GetPatternType(srcPattern.RecurrenceType);
 
-                                        operationChain += "Updating StartTime; ";
-                                        dstAppointment.Start = CreateDateTimeTimeZone(srcPattern.StartTime, srcAppointment.StartTimeZone.ID);
-                                        operationChain += "Updating Duration; ";
-                                        dstAppointment.End = CreateDateTimeTimeZone(srcPattern.EndTime, srcAppointment.StartTimeZone.ID);
+                                        operationChain += "Updating Start and End; ";
+                                        if (srcAppointment.AllDayEvent)
+                                        {
+                                            dstAppointment.Start = CreateDateTimeTimeZone(srcAppointment.Start.Date, TimeZoneInfo.Local.Id);
+                                            dstAppointment.End = CreateDateTimeTimeZone(srcAppointment.End.Date, TimeZoneInfo.Local.Id);
+                                        }
+                                        else
+                                        {
+                                            dstAppointment.Start = CreateDateTimeTimeZone(srcAppointment.Start, TimeZoneInfo.Local.Id);
+                                            dstAppointment.End = CreateDateTimeTimeZone(srcAppointment.End, TimeZoneInfo.Local.Id);
+                                        }
+
                                         LogMessage("  recurring {0} at {1}.", dstRecurrence.Pattern.Type, dstAppointment.Start.DateTime.Substring(11, 8));
 
                                         UpdateDestinationPattern(srcPattern, dstRecurrence);

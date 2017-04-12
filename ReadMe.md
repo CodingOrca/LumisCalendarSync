@@ -13,7 +13,7 @@ your Microsoft account (containing your target calendar) must have been migrated
 Unfortunately, you cannot speed up or influence when your account will be migrated, currently known target is 31. August 2016.
 You can verify if your account has been migrated by logging in to your account at [http://outlook.com](http://outlook.com) and verify if the label above your inbox is "Outlook-Mail". If yes, your account runs on the office 365 servers. If it is "Outlook.com", you are on the old outlook.com servers and this version of Lumis Calendar Sync will not work for you. 
 
-**Upgrade Notes:** 
+**Notes:** 
 
 if you create a new Microsoft account, it is hosted on the new office 365 servers!
 
@@ -34,7 +34,7 @@ But is a real sync: it is able to keep track of the changes in your local calend
 
 Connecting your smartphone to your calendar on outlook.com will provide you with reminders on your smartphone.
 
-**Note:** 
+**Upgrade Notes:** 
 
 If you where using Lumis Calendar Sync 1.4 or earlier, please:
 * uninstall it before using this version. 

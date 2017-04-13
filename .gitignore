@@ -1,0 +1,10 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/LumisCalendarSync/Model/OAuthHelper.ClientId.cs
+/LumisCalendarSync/bin/Debug
+/LumisCalendarSync/obj
+/LumisCalendarSyncSetup/obj/Debug
+/packages
+/LumisCaleandarSync.v12.suo

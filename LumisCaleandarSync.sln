@@ -7,19 +7,14 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LumisCalendarSync", "LumisC
 EndProject
 Project("{930C7802-8A8C-48F9-8165-68863BCCD9DD}") = "LumisCalendarSyncSetup", "LumisCalendarSyncSetup\LumisCalendarSyncSetup.wixproj", "{71D0E3DC-D9E4-44BC-94B9-58C5D08B4518}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{248A7474-A727-4784-82D1-22A445C2110A}"
+	ProjectSection(SolutionItems) = preProject
+		.nuget\NuGet.Config = .nuget\NuGet.Config
+		.nuget\NuGet.exe = .nuget\NuGet.exe
+		.nuget\NuGet.targets = .nuget\NuGet.targets
+	EndProjectSection
+EndProject
 Global
-	GlobalSection(TeamFoundationVersionControl) = preSolution
-		SccNumberOfProjects = 3
-		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
-		SccTeamFoundationServer = https://tfs.codeplex.com/tfs/tfs12
-		SccLocalPath0 = .
-		SccProjectUniqueName1 = LumisCalendarSync\\LumisCalendarSync.csproj
-		SccProjectName1 = LumisCalendarSync
-		SccLocalPath1 = LumisCalendarSync
-		SccProjectUniqueName2 = LumisCalendarSyncSetup\\LumisCalendarSyncSetup.wixproj
-		SccProjectName2 = LumisCalendarSyncSetup
-		SccLocalPath2 = LumisCalendarSyncSetup
-	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Debug|Mixed Platforms = Debug|Mixed Platforms

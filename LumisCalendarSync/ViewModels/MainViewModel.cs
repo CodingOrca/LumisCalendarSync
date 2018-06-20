@@ -31,7 +31,7 @@ namespace LumisCalendarSync.ViewModels
         // We change this whenever we publish a new msi version.
         public string CurrentAppVersion
         {
-            get { return "2.6.0.0"; }
+            get { return "2.7.0.0"; }
         }
         
         // When we change the list of synced attributes, we change CurrentDataVersion to force a sync of all appointments 
@@ -40,7 +40,7 @@ namespace LumisCalendarSync.ViewModels
         // But not needing to set it vor every new MSI version: if no sync must be forced, don't change it.
         public string CurrentDataVersion
         {
-            get { return "2.6.0.0"; }
+            get { return "2.7.0.0"; }
         }
 
 
@@ -71,7 +71,8 @@ namespace LumisCalendarSync.ViewModels
                         Subject = "Designer Event Subject",
                         Location = new Location {DisplayName = "Wherever"},
                         Start = new DateTimeTimeZone {DateTime = DateTime.Now.ToString("O")},
-                        End = new DateTimeTimeZone {DateTime = (DateTime.Now + TimeSpan.FromHours(1)).ToString("O")}
+                        End = new DateTimeTimeZone {DateTime = (DateTime.Now + TimeSpan.FromHours(1)).ToString("O")},
+                        ShowAs = FreeBusyStatus.Tentative
                     }));
                 LogEntries.Add("Some Log entry");
                 return;
@@ -1147,8 +1148,8 @@ namespace LumisCalendarSync.ViewModels
                     return FreeBusyStatus.Oof;
                 case OlBusyStatus.olTentative:
                     return FreeBusyStatus.Tentative;
-                //case OlBusyStatus.olFree:
-                //    return FreeBusyStatus.Free;
+                case OlBusyStatus.olFree:
+                    return FreeBusyStatus.Free;
                 default:
                     return FreeBusyStatus.Unknown;
             }

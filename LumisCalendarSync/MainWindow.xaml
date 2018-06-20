@@ -117,6 +117,7 @@
                     <DataGridTextColumn Header="Synced?" Binding="{Binding IsSynchronized}"/>
                     <DataGridTextColumn Header="Subject" Width="300" Binding="{Binding Subject}"/>
                     <DataGridTextColumn Header="Location" Binding="{Binding Location}"/>
+                    <DataGridTextColumn Header="Show as" Binding="{Binding ShowAs}"/>
                     <DataGridTextColumn Header="Start" Binding="{Binding Start}"/>
                     <DataGridTextColumn Header="End" Binding="{Binding End}"/>
                     <DataGridTextColumn Header="Recurring?" Binding="{Binding IsRecurring}"/>

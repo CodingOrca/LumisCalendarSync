@@ -8,3 +8,8 @@
 /LumisCalendarSyncSetup/obj/Debug
 /packages
 /LumisCaleandarSync.v12.suo
+/LumisCalendarSync/bin
+/.vs
+/LumisCalendarSyncSetup/bin
+/LumisCalendarSyncSetup/obj
+/LumisCaleandarSync.sln.DotSettings.user

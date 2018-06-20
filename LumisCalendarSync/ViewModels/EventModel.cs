@@ -20,29 +20,34 @@ namespace LumisCalendarSync.ViewModels
 
         public string Subject
         {
-            get { return myEvent.Subject; }
+            get { return Event.Subject; }
         }
 
         public string Location
         {
-            get { return myEvent.Location.DisplayName; }
+            get { return Event.Location.DisplayName; }
+        }
+
+        public string ShowAs
+        {
+            get { return Event.ShowAs.ToString(); }
         }
 
         public string IsRecurring
         {
-            get { return myEvent.Type == EventType.SeriesMaster ? "yes" : "no"; }
+            get { return Event.Type == EventType.SeriesMaster ? "yes" : "no"; }
         }
 
         public string Recurrence
         {
-            get { return myEvent.Type == EventType.SeriesMaster ? myEvent.Recurrence.Pattern.Type.ToString() : "n.a."; }
+            get { return Event.Type == EventType.SeriesMaster ? Event.Recurrence.Pattern.Type.ToString() : "n.a."; }
         }
 
         public string Start
         {
             get
             {
-                var dt = DateTime.Parse(myEvent.Start.DateTime);
+                var dt = DateTime.Parse(Event.Start.DateTime);
                 var timeZoneInfo = TimeZoneInfo.Utc;
                 if (!string.IsNullOrWhiteSpace(Event.Start.TimeZone))
                 {
@@ -57,7 +62,7 @@ namespace LumisCalendarSync.ViewModels
         {
             get
             {
-                var dt = DateTime.Parse(myEvent.End.DateTime);
+                var dt = DateTime.Parse(Event.End.DateTime);
                 var timeZoneInfo = TimeZoneInfo.Utc;
                 if (!string.IsNullOrWhiteSpace(Event.End.TimeZone))
                 {
@@ -77,7 +82,7 @@ namespace LumisCalendarSync.ViewModels
 
         public int? Reminder
         {
-            get { return myEvent.ReminderMinutesBeforeStart; }
+            get { return Event.ReminderMinutesBeforeStart; }
         }
     }
 }

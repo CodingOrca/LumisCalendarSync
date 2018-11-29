@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
-  <Product Id="*" Name="Lumis Calendar Sync" Language="1033" Version="2.7.0.0" Manufacturer="Artur Pusztai" UpgradeCode="550dbe12-c618-4d8d-81ff-8343758c6879">
+  <Product Id="{598B2207-4FA4-4794-B987-6C804E9B78D1}" Name="Lumis Calendar Sync" Language="1033" Version="2.8.0.0" Manufacturer="Artur Pusztai" UpgradeCode="550dbe12-c618-4d8d-81ff-8343758c6879">
     <Package InstallerVersion="300" Compressed="yes" InstallScope="perUser"/>
 
     <MajorUpgrade
@@ -26,15 +26,11 @@
         <File Id="LumisCalendarSync.exe" Source="$(var.LumisCalendarSync.TargetDir)" Checksum="yes"/>
         <File Id="LumisCalendarSync.exe.config" Source="$(var.LumisCalendarSync.TargetDir)" Checksum="yes"/>
         <File Id="Microsoft.OData.Client.dll" Source="$(var.LumisCalendarSync.TargetDir)" Checksum="yes"/>
-        <File Id="Microsoft.OData.Client.xml" Source="$(var.LumisCalendarSync.TargetDir)" Checksum="yes"/>
         <File Id="Microsoft.OData.Core.dll" Source="$(var.LumisCalendarSync.TargetDir)" Checksum="yes"/>
-        <File Id="Microsoft.OData.Core.xml" Source="$(var.LumisCalendarSync.TargetDir)" Checksum="yes"/>
         <File Id="Microsoft.OData.Edm.dll" Source="$(var.LumisCalendarSync.TargetDir)" Checksum="yes"/>
-        <File Id="Microsoft.OData.Edm.xml" Source="$(var.LumisCalendarSync.TargetDir)" Checksum="yes"/>
         <File Id="Microsoft.OData.ProxyExtensions.dll" Source="$(var.LumisCalendarSync.TargetDir)" Checksum="yes"/>
         <File Id="Microsoft.Office365.OutlookServices.Portable.dll" Source="$(var.LumisCalendarSync.TargetDir)" Checksum="yes"/>
         <File Id="Microsoft.Spatial.dll" Source="$(var.LumisCalendarSync.TargetDir)" Checksum="yes"/>
-        <File Id="Microsoft.Spatial.xml" Source="$(var.LumisCalendarSync.TargetDir)" Checksum="yes"/>
         <File Id="Interop.IWshRuntimeLibrary.dll" Source="$(var.LumisCalendarSync.TargetDir)" Checksum="yes"/>
         <File Id="Interop.Shell32.dll" Source="$(var.LumisCalendarSync.TargetDir)" Checksum="yes"/>
       </Component>

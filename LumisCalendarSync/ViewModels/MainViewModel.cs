@@ -31,7 +31,7 @@ namespace LumisCalendarSync.ViewModels
         // We change this whenever we publish a new msi version.
         public string CurrentAppVersion
         {
-            get { return "2.7.0.0"; }
+            get { return "2.8.0.0"; }
         }
         
         // When we change the list of synced attributes, we change CurrentDataVersion to force a sync of all appointments 
@@ -440,7 +440,7 @@ namespace LumisCalendarSync.ViewModels
                     }
 
                     var remoteCalendarEvents = myOutlookServicesClient.Me.Calendars[Settings.Default.RemoteCaleandarId].Events;
-                    
+
                     Events.Clear();
                     LogEntries.Clear();
                     LogMessage("Starting syncing your local appointments to remote calendar [{0}] on account [{1}].", SelectedCalendar.Name, User.EmailAddress);
@@ -485,7 +485,7 @@ namespace LumisCalendarSync.ViewModels
 
                             currentSubject = srcAppointment.Subject;
                             IEvent dstAppointment = null;
-                            operationChain += "Checking if target appointment alreay exists; ";
+                            operationChain += "Checking if target appointment already exists; ";
                             string reasonForSync = "New Appointment";
                             if (String.IsNullOrEmpty(srcAppointment.GlobalAppointmentID))
                             {
@@ -566,20 +566,20 @@ namespace LumisCalendarSync.ViewModels
                                 // Non-recurring appointment:
                                 if (!srcAppointment.IsRecurring)
                                 {
-                                    LogMessage("  on {0}.", srcAppointment.Start);
+                                    LogMessage("  on {0} UTC.", srcAppointment.StartUTC);
 
                                     operationChain += "Not Recurring; ";
 
                                     operationChain += "Updating Start and End; ";
                                     if (srcAppointment.AllDayEvent)
                                     {
-                                        dstAppointment.Start = CreateDateTimeTimeZone(srcAppointment.Start.Date, TimeZoneInfo.Local.Id);
-                                        dstAppointment.End = CreateDateTimeTimeZone(srcAppointment.End.Date, TimeZoneInfo.Local.Id);
+                                        dstAppointment.Start = CreateDateTimeTimeZone(srcAppointment.StartUTC.Date, TimeZoneInfo.Utc.Id);
+                                        dstAppointment.End = CreateDateTimeTimeZone(srcAppointment.EndUTC.Date, TimeZoneInfo.Utc.Id);
                                     }
                                     else
                                     {
-                                        dstAppointment.Start = CreateDateTimeTimeZone(srcAppointment.Start, TimeZoneInfo.Local.Id);
-                                        dstAppointment.End = CreateDateTimeTimeZone(srcAppointment.End, TimeZoneInfo.Local.Id);
+                                        dstAppointment.Start = CreateDateTimeTimeZone(srcAppointment.StartUTC, TimeZoneInfo.Utc.Id);
+                                        dstAppointment.End = CreateDateTimeTimeZone(srcAppointment.EndUTC, TimeZoneInfo.Utc.Id);
                                     }
 
                                     operationChain += "Saving; ";
@@ -600,7 +600,7 @@ namespace LumisCalendarSync.ViewModels
                                     operationChain += "Recurring; ";
                                     var srcPattern = srcAppointment.GetRecurrencePattern();
 
-                                    // if the recurrenct appointment changed, we have created a new one; else, we need no change for the master event.
+                                    // if the recurrent appointment changed, we have created a new one; else, we need no change for the master event.
                                     if (dstAppointmentIsNew)
                                     {
                                         var dstRecurrence = dstAppointment.Recurrence ?? (dstAppointment.Recurrence = new PatternedRecurrence
@@ -615,13 +615,13 @@ namespace LumisCalendarSync.ViewModels
                                         operationChain += "Updating Start and End; ";
                                         if (srcAppointment.AllDayEvent)
                                         {
-                                            dstAppointment.Start = CreateDateTimeTimeZone(srcAppointment.Start.Date, TimeZoneInfo.Local.Id);
-                                            dstAppointment.End = CreateDateTimeTimeZone(srcAppointment.End.Date, TimeZoneInfo.Local.Id);
+                                            dstAppointment.Start = CreateDateTimeTimeZone(srcAppointment.StartUTC.Date, TimeZoneInfo.Utc.Id);
+                                            dstAppointment.End = CreateDateTimeTimeZone(srcAppointment.EndUTC.Date, TimeZoneInfo.Utc.Id);
                                         }
                                         else
                                         {
-                                            dstAppointment.Start = CreateDateTimeTimeZone(srcAppointment.Start, TimeZoneInfo.Local.Id);
-                                            dstAppointment.End = CreateDateTimeTimeZone(srcAppointment.End, TimeZoneInfo.Local.Id);
+                                            dstAppointment.Start = CreateDateTimeTimeZone(srcAppointment.StartUTC, TimeZoneInfo.Utc.Id);
+                                            dstAppointment.End = CreateDateTimeTimeZone(srcAppointment.EndUTC, TimeZoneInfo.Utc.Id);
                                         }
 
                                         LogMessage("  recurring {0} at {1}.", dstRecurrence.Pattern.Type, dstAppointment.Start.DateTime.Substring(11, 8));
@@ -671,7 +671,7 @@ namespace LumisCalendarSync.ViewModels
                                                 var originalDate = srcException.OriginalDate.ToString("O").Substring(0, 10);
                                                 if (myMappingTable[srcAppointment.GlobalAppointmentID].ExceptionIds.ContainsKey(originalDate))
                                                 {
-                                                    var lastChange = srcExceptionItem != null ? srcExceptionItem.LastModificationTime.ToString("O") : null;
+                                                    var lastChange = srcExceptionItem?.LastModificationTime.ToString("O");
                                                     if (lastChange == myMappingTable[srcAppointment.GlobalAppointmentID].ExceptionIds[originalDate].LastSyncTimeStamp)
                                                     {
                                                         numberOfUnchangedExceptions++;
@@ -712,8 +712,8 @@ namespace LumisCalendarSync.ViewModels
                                                     dstExceptionItem.Type = EventType.Exception;
                                                     dstExceptionItem.Subject = srcExceptionItem.Subject;
                                                     dstExceptionItem.Location = new Location {DisplayName = srcExceptionItem.Location};
-                                                    dstExceptionItem.Start = CreateDateTimeTimeZone(srcExceptionItem.Start, TimeZoneInfo.Local.Id);
-                                                    dstExceptionItem.End = CreateDateTimeTimeZone(srcExceptionItem.End, TimeZoneInfo.Local.Id);
+                                                    dstExceptionItem.Start = CreateDateTimeTimeZone(srcExceptionItem.StartUTC, TimeZoneInfo.Utc.Id);
+                                                    dstExceptionItem.End = CreateDateTimeTimeZone(srcExceptionItem.EndUTC, TimeZoneInfo.Utc.Id);
                                                     dstExceptionItem.IsReminderOn = srcExceptionItem.ReminderSet;
                                                     if (srcExceptionItem.ReminderSet)
                                                     {

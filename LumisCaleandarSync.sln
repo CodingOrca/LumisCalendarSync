@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2013
-VisualStudioVersion = 12.0.40629.0
+# Visual Studio 15
+VisualStudioVersion = 15.0.27703.2035
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LumisCalendarSync", "LumisCalendarSync\LumisCalendarSync.csproj", "{BD8D9BE0-CAA5-48AC-88EF-BEEF2FD85552}"
 EndProject
@@ -37,6 +37,7 @@ Global
 		{BD8D9BE0-CAA5-48AC-88EF-BEEF2FD85552}.Release|x86.ActiveCfg = Release|x86
 		{BD8D9BE0-CAA5-48AC-88EF-BEEF2FD85552}.Release|x86.Build.0 = Release|x86
 		{71D0E3DC-D9E4-44BC-94B9-58C5D08B4518}.Debug|Any CPU.ActiveCfg = Debug|x86
+		{71D0E3DC-D9E4-44BC-94B9-58C5D08B4518}.Debug|Any CPU.Build.0 = Debug|x86
 		{71D0E3DC-D9E4-44BC-94B9-58C5D08B4518}.Debug|Mixed Platforms.ActiveCfg = Debug|x86
 		{71D0E3DC-D9E4-44BC-94B9-58C5D08B4518}.Debug|Mixed Platforms.Build.0 = Debug|x86
 		{71D0E3DC-D9E4-44BC-94B9-58C5D08B4518}.Debug|x86.ActiveCfg = Debug|x86
@@ -50,5 +51,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {AEE808B3-039B-450D-965B-383D38C3AD3C}
 	EndGlobalSection
 EndGlobal

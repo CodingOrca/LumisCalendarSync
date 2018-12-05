@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
-  <Product Id="{598B2207-4FA4-4794-B987-6C804E9B78D1}" Name="Lumis Calendar Sync" Language="1033" Version="2.8.0.0" Manufacturer="Artur Pusztai" UpgradeCode="550dbe12-c618-4d8d-81ff-8343758c6879">
+  <Product Id="{47D2897E-D49C-4923-9990-422BACA6A7B8}" Name="Lumis Calendar Sync" Language="1033" Version="2.12.0.0" Manufacturer="Artur Pusztai" UpgradeCode="550dbe12-c618-4d8d-81ff-8343758c6879">
     <Package InstallerVersion="300" Compressed="yes" InstallScope="perUser"/>
 
     <MajorUpgrade

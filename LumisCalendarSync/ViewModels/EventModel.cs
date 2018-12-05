@@ -6,42 +6,22 @@ namespace LumisCalendarSync.ViewModels
 {
     public class EventModel: BindableBase
     {
-        private readonly IEvent myEvent;
-
         public EventModel(IEvent e)
         {
-            myEvent = e;
+            Event = e;
         }
 
-        public IEvent Event
-        {
-            get { return myEvent; }
-        }
+        public IEvent Event { get; }
 
-        public string Subject
-        {
-            get { return Event.Subject; }
-        }
+        public string Subject => Event.Subject;
 
-        public string Location
-        {
-            get { return Event.Location.DisplayName; }
-        }
+        public string Location => Event.Location.DisplayName;
 
-        public string ShowAs
-        {
-            get { return Event.ShowAs.ToString(); }
-        }
+        public string ShowAs => Event.ShowAs.ToString();
 
-        public string IsRecurring
-        {
-            get { return Event.Type == EventType.SeriesMaster ? "yes" : "no"; }
-        }
+        public string IsRecurring => Event.Type == EventType.SeriesMaster ? "yes" : "no";
 
-        public string Recurrence
-        {
-            get { return Event.Type == EventType.SeriesMaster ? Event.Recurrence.Pattern.Type.ToString() : "n.a."; }
-        }
+        public string Recurrence => Event.Type == EventType.SeriesMaster ? Event.Recurrence.Pattern.Type.ToString() : "n.a.";
 
         public string Start
         {
@@ -76,13 +56,10 @@ namespace LumisCalendarSync.ViewModels
         private bool myIsSynchronized;
         public bool IsSynchronized
         {
-            get { return myIsSynchronized; }
-            set { Set(ref myIsSynchronized, value, "IsSynchronized"); }
+            get => myIsSynchronized;
+            set => Set(ref myIsSynchronized, value, "IsSynchronized");
         }
 
-        public int? Reminder
-        {
-            get { return Event.ReminderMinutesBeforeStart; }
-        }
+        public int? Reminder => Event.ReminderMinutesBeforeStart;
     }
 }

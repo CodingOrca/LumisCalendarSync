@@ -3,7 +3,6 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using System.Windows;
 
 namespace LumisCalendarSync.ViewModels
 {
@@ -12,7 +11,7 @@ namespace LumisCalendarSync.ViewModels
     /// </summary>
     public static class WeakEventHandlerManager
     {
-        private static readonly SynchronizationContext syncContext = SynchronizationContext.Current;
+        private static readonly SynchronizationContext mySyncContext = SynchronizationContext.Current;
 
         ///<summary>
         /// Invokes the handlers 
@@ -43,9 +42,9 @@ namespace LumisCalendarSync.ViewModels
         {
             if (eventHandler != null)
             {
-                if (syncContext != null)
+                if (mySyncContext != null)
                 {
-                    syncContext.Post((o) => eventHandler(sender,  EventArgs.Empty), null);
+                    mySyncContext.Post((o) => eventHandler(sender,  EventArgs.Empty), null);
                 }
                 else
                 {
@@ -59,8 +58,7 @@ namespace LumisCalendarSync.ViewModels
             for (int i = handlers.Count - 1; i >= 0; i--)
             {
                 WeakReference reference = handlers[i];
-                EventHandler handler = reference.Target as EventHandler;
-                if (handler == null)
+                if (!(reference.Target is EventHandler handler))
                 {
                     // Clean up old handlers that have been collected
                     handlers.RemoveAt(i);
@@ -102,8 +100,7 @@ namespace LumisCalendarSync.ViewModels
                 for (int i = handlers.Count - 1; i >= 0; i--)
                 {
                     WeakReference reference = handlers[i];
-                    EventHandler existingHandler = reference.Target as EventHandler;
-                    if ((existingHandler == null) || (existingHandler == handler))
+                    if ((!(reference.Target is EventHandler existingHandler)) || (existingHandler == handler))
                     {
                         // Clean up old handlers that have been collected
                         // in addition to the handler that is to be removed.

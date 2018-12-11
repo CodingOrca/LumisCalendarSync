@@ -542,20 +542,20 @@ namespace LumisCalendarSync.ViewModels
                                 // Non-recurring appointment:
                                 if (!srcAppointment.IsRecurring)
                                 {
-                                    LogMessage($"    [{srcAppointment.Subject}]: on {srcAppointment.StartUTC} UTC. {reasonForSync}. ");
+                                    LogMessage($"    [{srcAppointment.Subject}]: on {srcAppointment.Start}. {reasonForSync}. ");
 
                                     operationChain += "Not Recurring; ";
 
                                     operationChain += "Updating Start and End; ";
                                     if (srcAppointment.AllDayEvent)
                                     {
-                                        dstAppointment.Start = CreateDateTimeTimeZone(srcAppointment.StartUTC.Date, TimeZoneInfo.Utc.Id);
-                                        dstAppointment.End = CreateDateTimeTimeZone(srcAppointment.EndUTC.Date, TimeZoneInfo.Utc.Id);
+                                        dstAppointment.Start = CreateDateTimeTimeZone(srcAppointment.StartInStartTimeZone.Date, srcAppointment.StartTimeZone.ID);
+                                        dstAppointment.End = CreateDateTimeTimeZone(srcAppointment.EndInEndTimeZone.Date, srcAppointment.EndTimeZone.ID);
                                     }
                                     else
                                     {
-                                        dstAppointment.Start = CreateDateTimeTimeZone(srcAppointment.StartUTC, TimeZoneInfo.Utc.Id);
-                                        dstAppointment.End = CreateDateTimeTimeZone(srcAppointment.EndUTC, TimeZoneInfo.Utc.Id);
+                                        dstAppointment.Start = CreateDateTimeTimeZone(srcAppointment.StartInStartTimeZone, srcAppointment.StartTimeZone.ID);
+                                        dstAppointment.End = CreateDateTimeTimeZone(srcAppointment.EndInEndTimeZone, srcAppointment.EndTimeZone.ID);
                                     }
 
                                     operationChain += "Saving; ";
@@ -589,13 +589,13 @@ namespace LumisCalendarSync.ViewModels
                                     operationChain += "Updating Start and End; ";
                                     if (srcAppointment.AllDayEvent)
                                     {
-                                        dstAppointment.Start = CreateDateTimeTimeZone(srcAppointment.StartUTC.Date, TimeZoneInfo.Utc.Id);
-                                        dstAppointment.End = CreateDateTimeTimeZone(srcAppointment.EndUTC.Date, TimeZoneInfo.Utc.Id);
+                                        dstAppointment.Start = CreateDateTimeTimeZone(srcAppointment.StartInStartTimeZone.Date, srcAppointment.StartTimeZone.ID);
+                                        dstAppointment.End = CreateDateTimeTimeZone(srcAppointment.EndInEndTimeZone.Date, srcAppointment.EndTimeZone.ID);
                                     }
                                     else
                                     {
-                                        dstAppointment.Start = CreateDateTimeTimeZone(srcAppointment.StartUTC, TimeZoneInfo.Utc.Id);
-                                        dstAppointment.End = CreateDateTimeTimeZone(srcAppointment.EndUTC, TimeZoneInfo.Utc.Id);
+                                        dstAppointment.Start = CreateDateTimeTimeZone(srcAppointment.StartInStartTimeZone, srcAppointment.StartTimeZone.ID);
+                                        dstAppointment.End = CreateDateTimeTimeZone(srcAppointment.EndInEndTimeZone, srcAppointment.EndTimeZone.ID);
                                     }
 
                                     LogMessage($"    [{srcAppointment.Subject}]: recurring {dstRecurrence.Pattern.Type} at {dstAppointment.Start.DateTime.Substring(11, 8)}. {reasonForSync}. ");
@@ -783,8 +783,8 @@ namespace LumisCalendarSync.ViewModels
                                     dstExceptionItem.Type = EventType.Exception;
                                     dstExceptionItem.Subject = srcExceptionItem.Subject;
                                     dstExceptionItem.Location = new Location {DisplayName = srcExceptionItem.Location};
-                                    dstExceptionItem.Start = CreateDateTimeTimeZone(srcExceptionItem.StartUTC, TimeZoneInfo.Utc.Id);
-                                    dstExceptionItem.End = CreateDateTimeTimeZone(srcExceptionItem.EndUTC, TimeZoneInfo.Utc.Id);
+                                    dstExceptionItem.Start = CreateDateTimeTimeZone(srcExceptionItem.StartInStartTimeZone, srcExceptionItem.StartTimeZone.ID);
+                                    dstExceptionItem.End = CreateDateTimeTimeZone(srcExceptionItem.EndInEndTimeZone, srcExceptionItem.EndTimeZone.ID);
                                     dstExceptionItem.IsReminderOn = srcExceptionItem.ReminderSet;
                                     if (srcExceptionItem.ReminderSet)
                                     {

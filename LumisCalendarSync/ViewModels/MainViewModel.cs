@@ -42,7 +42,7 @@ namespace LumisCalendarSync.ViewModels
         // at the first sync with the new Application version. 
         // Best Practice: if we change some code (fix or new feature) which needs a full sync, set this to the same value as in the MSI.
         // But not needing to set it for every new MSI version: if no sync must be forced, don't change it.
-        private string CurrentDataVersion => "2.11.0.0";
+        private string CurrentDataVersion => "2.15.0.0";
 
 
         public MainViewModel()
@@ -99,7 +99,14 @@ namespace LumisCalendarSync.ViewModels
         private void LogMessage(string format, params object[] arguments)
         {
             var time = DateTime.Now.ToString("s");
-            LogEntries.Add(string.IsNullOrWhiteSpace(format) ? "" : $"{time}: {string.Format(format, arguments)}");
+            if (String.IsNullOrWhiteSpace(format))
+            {
+                LogEntries.Add(String.Format(""));
+            }
+            else
+            {
+                LogEntries.Add(String.Format("{0}: {1}", time, String.Format(format, arguments)));
+            }
             WriteMessageLog(format, arguments);
         }
 
